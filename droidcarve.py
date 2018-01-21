@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import os, argparse, fnmatch
+from os import listdir
 from cmd import Cmd
 from subprocess import call
 
@@ -26,6 +27,54 @@ APK_FILE = ""
 CACHE_PATH = os.getcwd() + "/cache/"
 UNZIPPED_PATH = os.getcwd() + "/unzipped/"
 
+class CodeParser():
+
+    def __init__(self, code_path):
+        self.code_path = code_path
+
+    '''
+    Extract class name from a smali source line. Every class name is represented
+    as a classdescriptor that starts zith 'L' and ends with ';'.
+    '''
+    def extract_class_name(self,class_line):
+        for el in class_line.split(" "):
+            if el.startswith("L") and el.endswith(";"):
+                return el
+
+    def start(self):
+        for subdir, dirs, files in os.walk(self.code_path):
+            for file in files:
+                full_path = os.path.join(subdir, file)
+                with open(full_path, 'r') as f:
+                    continue_loop = True;
+                    for line in f:
+                        if line.startswith(".class"):
+                            class_line = line.strip("\n")  # extract the class line; always first line
+                            class_name = self.extract_class_name(class_line)  # extract the class descriptor
+                            #print class_name
+
+                        #if line.lstrip().startswith("const-string"):
+                            #print line
+
+                    if not continue_loop:
+                        continue
+
+class FileParser():
+
+    def __init__(self, files_path):
+        self.files_path = files_path
+        self.signature_files = []
+
+    def start(self):
+        for subdir, dirs, files in os.walk(self.files_path):
+            for file in files:
+                full_path = os.path.join(subdir, file)
+                if file.endswith("RSA"):
+                    self.signature_files.append(full_path)
+
+    def get_signature_files(self):
+        return self.signature_files
+
 
 class DroidCarve(Cmd):
 
@@ -33,6 +82,8 @@ class DroidCarve(Cmd):
         Cmd.__init__(self)
         self.prompt = "DC $> "
         self.apk_file = str(apk_file)
+        self.file_parser = FileParser(UNZIPPED_PATH)
+        self.code_parser = CodeParser(CACHE_PATH)
 
     def do_help(self, arg):
         print "help yoo"
@@ -50,6 +101,13 @@ class DroidCarve(Cmd):
         self.disassemble_apk()
         print "Analyzing ... Done"
 
+    def do_signature(self, arg):
+        files = self.file_parser.get_signature_files()
+        for f in files:
+            print "Found signature file : "+f
+            call(["keytool","-printcert", "-file", f])
+
+
     def do_statistics(self, arg):
         onlyfiles = len(fnmatch.filter(os.listdir(CACHE_PATH), '*.smali'))
         print 'Disassembled classes = '+str(onlyfiles)
@@ -60,6 +118,10 @@ class DroidCarve(Cmd):
     def disassemble_apk(self):
         print "Disassembling APK ..."
         call(["java", "-jar", BAKSMALI_PATH, "d", self.apk_file, "-o", CACHE_PATH])
+        print "Analyzing disassembled code ..."
+        self.code_parser.start()
+        print "Analyzing unzipped files ..."
+        self.file_parser.start()
 
     def unzip_apk(self):
         print "Unzipping APK ..."
@@ -96,8 +158,6 @@ def check_apk_file():
 '''
 Check if there is a baksmali tool.
 '''
-
-
 def has_baksmali():
     return os.path.isfile(BAKSMALI_PATH)
 
