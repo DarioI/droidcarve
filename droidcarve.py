@@ -1,4 +1,4 @@
-# This file is part of DroidGraph.
+# This file is part of DroidCarve.
 #
 # Copyright (C) 2015, Dario Incalza <dario.incalza at gmail.com>
 # All rights reserved.
@@ -87,8 +87,6 @@ Sanity check to see if a valid APK file is specified.
 
 TODO: implement more specific check to see if it is a valid APK file
 '''
-
-
 def check_apk_file():
     if APK_FILE == "" or not os.path.isfile(APK_FILE):
         print "No APK file specified, exiting."
