@@ -9,6 +9,15 @@ optional arguments:
   -h, --help         show this help message and exit
   -a APK, --apk APK  APK file to analyze
 ```
+## Installation and requirements
+This tool is written for Python 2.7 and requires pip.
+
+```shell
+git clone https://github.com/DarioI/droidcarve
+cd droidcarve
+pip install -r requirements.txt
+python droidcarve.py -a yourapplication.apk  
+```
 
 ## Features
 * Code disassembling into Smali bytecode
