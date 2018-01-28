@@ -19,10 +19,7 @@ import os, argparse, fnmatch, utils
 from cmd import Cmd
 from subprocess import call
 import hashlib
-
-from xml.dom import minidom
-from axmlparserpy.axmlprinter import AXMLPrinter
-import xml.dom.minidom
+from parsers import FileParser, AndroidManifestParser, CodeParser
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters.terminal256 import Terminal256Formatter
@@ -34,86 +31,6 @@ BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
 APK_FILE = ""
 CACHE_PATH_SUFFIX = "/cache/"
 UNZIPPED_PATH_SUFFIX = "/unzipped/"
-
-
-class CodeParser():
-
-    def __init__(self, code_path):
-        self.code_path = code_path
-
-    '''
-    Extract class name from a smali source line. Every class name is represented
-    as a classdescriptor that starts zith 'L' and ends with ';'.
-    '''
-
-    def extract_class_name(self, class_line):
-        for el in class_line.split(" "):
-            if el.startswith("L") and el.endswith(";"):
-                return el
-
-    def start(self):
-        for subdir, dirs, files in os.walk(self.code_path):
-            for file in files:
-                full_path = os.path.join(subdir, file)
-                with open(full_path, 'r') as f:
-                    continue_loop = True;
-                    for line in f:
-                        if line.startswith(".class"):
-                            class_line = line.strip("\n")  # extract the class line; always first line
-                            class_name = self.extract_class_name(class_line)  # extract the class descriptor
-                            # print class_name
-
-                        # if line.lstrip().startswith("const-string"):
-                        # print line
-
-                    if not continue_loop:
-                        continue
-
-class AndroidManifestParser():
-
-    def __init__(self, manifest_xml_file):
-        self.manifest = manifest_xml_file
-        self.permissions = []
-
-    def start(self):
-        ap = AXMLPrinter(open(self.manifest, 'rb').read())
-        buff = minidom.parseString(ap.getBuff()).toxml()
-        xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
-        pretty_xml_as_string = xml_code.toprettyxml()
-        for line in pretty_xml_as_string.split("\n"):
-            if not line.find("<uses-permission") == -1:
-                self.permissions.append(line.split("\"")[1])
-
-    def get_permissions(self):
-        return self.permissions
-
-class FileParser():
-
-    def __init__(self, files_path):
-        self.files_path = files_path
-        self.signature_files = []
-        self.xml_files = []
-
-    def start(self):
-        for subdir, dirs, files in os.walk(self.files_path):
-            for file in files:
-                full_path = os.path.join(subdir, file)
-                if file.endswith("RSA"):
-                    self.signature_files.append(full_path)
-                if file.endswith("xml"):
-                    self.xml_files.append(full_path)
-
-    def get_signature_files(self):
-        return self.signature_files
-
-    def get_xml_files(self):
-        return self.xml_files
-
-    def get_xml(self, name):
-        for xml_file in self.xml_files:
-            if xml_file.endswith(name):
-                return xml_file
-
 
 class DroidCarve(Cmd):
 
@@ -216,13 +133,10 @@ class DroidCarve(Cmd):
             print "AndroidManifest.xml was not found."
             return
         if not option:
-            ap = AXMLPrinter(open(xml_file, 'rb').read())
-            buff = minidom.parseString(ap.getBuff()).toxml()
-            xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
-            pretty_xml_as_string = xml_code.toprettyxml()
+            xml_source = self.manifest_parser.get_xml()
             lexer = get_lexer_by_name("xml", stripall=True)
             formatter = Terminal256Formatter()
-            print (highlight(pretty_xml_as_string.rstrip(), lexer, formatter))
+            print (highlight(xml_source.rstrip(), lexer, formatter))
 
         else:
             if option == "p":
