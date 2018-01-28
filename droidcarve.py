@@ -24,13 +24,13 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters.terminal256 import Terminal256Formatter
 
-
 __author__ = 'Dario Incalza <dario.incalza@gmail.com>'
 
 BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
 APK_FILE = ""
 CACHE_PATH_SUFFIX = "/cache/"
 UNZIPPED_PATH_SUFFIX = "/unzipped/"
+
 
 class DroidCarve(Cmd):
 
@@ -63,8 +63,6 @@ class DroidCarve(Cmd):
         Unzip the Android application to a given destination.
         """
         self.unzip_apk(destination)
-
-
 
     def do_analyze(self, arg):
         """
@@ -142,12 +140,11 @@ class DroidCarve(Cmd):
             if option == "p":
                 for perm in self.manifest_parser.get_permissions():
                     if not perm.startswith("android."):
-                        utils.print_purple("\t"+perm)
+                        utils.print_purple("\t" + perm)
                     else:
-                        print "\t"+perm
+                        print "\t" + perm
 
         return
-
 
     '''
     Use baksmali to disassemble the APK.
@@ -157,7 +154,7 @@ class DroidCarve(Cmd):
         print "Disassembling APK ..."
         call(["java", "-jar", BAKSMALI_PATH, "d", self.apk_file, "-o", self.cache_path])
 
-    def unzip_apk(self, destination = None):
+    def unzip_apk(self, destination=None):
         if destination is None or destination == "":
             print "Unzipping APK ..."
             call(["unzip", self.apk_file, "-d", self.unzip_path])
