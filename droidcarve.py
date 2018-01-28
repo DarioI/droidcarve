@@ -23,7 +23,10 @@ import hashlib
 from xml.dom import minidom
 from axmlparserpy.axmlprinter import AXMLPrinter
 import xml.dom.minidom
-import lxml.etree as etree
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters.terminal256 import Terminal256Formatter
+
 
 __author__ = 'Dario Incalza <dario.incalza@gmail.com>'
 
@@ -65,6 +68,15 @@ class CodeParser():
 
                     if not continue_loop:
                         continue
+
+class AndroidManifestParser():
+
+    def __init__(self, manifest_xml_file):
+        self.manifest = manifest_xml_file
+        self.permissions = []
+
+    def start(self):
+        pass
 
 
 class FileParser():
@@ -143,7 +155,9 @@ class DroidCarve(Cmd):
                 buff = minidom.parseString(ap.getBuff()).toxml()
                 xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
                 pretty_xml_as_string = xml_code.toprettyxml()
-                print(pretty_xml_as_string.rstrip())
+                lexer = get_lexer_by_name("xml", stripall=True)
+                formatter = Terminal256Formatter()
+                print (highlight(pretty_xml_as_string.rstrip(), lexer, formatter))
                 return
 
         print "AndroidManifest.xml was not found."
