@@ -27,7 +27,7 @@ python droidcarve.py -a yourapplication.apk
 ## Roadmap
 * Code parsing: strings, cryptography, dynamic code loading, native libraries etc.
 * Java source code navigation
-* ...
+* Static detection of privacy leaks
 
 ## Smali/Baksmali License
 
