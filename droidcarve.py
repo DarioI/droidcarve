@@ -20,6 +20,11 @@ from cmd import Cmd
 from subprocess import call
 import hashlib
 
+from xml.dom import minidom
+from axmlparserpy.axmlprinter import AXMLPrinter
+import xml.dom.minidom
+import lxml.etree as etree
+
 __author__ = 'Dario Incalza <dario.incalza@gmail.com>'
 
 BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
@@ -67,6 +72,7 @@ class FileParser():
     def __init__(self, files_path):
         self.files_path = files_path
         self.signature_files = []
+        self.xml_files = []
 
     def start(self):
         for subdir, dirs, files in os.walk(self.files_path):
@@ -74,14 +80,19 @@ class FileParser():
                 full_path = os.path.join(subdir, file)
                 if file.endswith("RSA"):
                     self.signature_files.append(full_path)
+                if file.endswith("xml"):
+                    self.xml_files.append(full_path)
 
     def get_signature_files(self):
         return self.signature_files
 
+    def get_xml_files(self):
+        return self.xml_files
+
 
 class DroidCarve(Cmd):
 
-    def __init__(self, apk_file, cache_path, unzip_path):
+    def __init__(self, apk_file, cache_path, unzip_path, from_cache=False):
         Cmd.__init__(self)
         self.prompt = "DC $> "
         self.apk_file = str(apk_file)
@@ -89,6 +100,7 @@ class DroidCarve(Cmd):
         self.unzip_path = unzip_path
         self.file_parser = FileParser(unzip_path)
         self.code_parser = CodeParser(cache_path)
+        self.from_cache = from_cache
 
     def do_help(self, arg):
         print "help yoo"
@@ -101,9 +113,16 @@ class DroidCarve(Cmd):
         self.do_quit(arg)
 
     def do_analyze(self, arg):
-        print "Analyzing ..."
-        self.unzip_apk()
-        self.disassemble_apk()
+        if not self.from_cache:
+            self.unzip_apk()
+            self.disassemble_apk()
+        else:
+            print "Start analysis from cache ..."
+
+        print "Analyzing disassembled code ..."
+        self.code_parser.start()
+        print "Analyzing unzipped files ..."
+        self.file_parser.start()
         print "Analyzing ... Done"
 
     def do_signature(self, arg):
@@ -116,6 +135,19 @@ class DroidCarve(Cmd):
         onlyfiles = len(fnmatch.filter(os.listdir(self.cache_path), '*.smali'))
         print 'Disassembled classes = ' + str(onlyfiles)
 
+    def do_manifest(self, arg):
+        xmls = self.file_parser.get_xml_files()
+        for xml_file in xmls:
+            if xml_file.endswith("/AndroidManifest.xml"):
+                ap = AXMLPrinter(open(xml_file, 'rb').read())
+                buff = minidom.parseString(ap.getBuff()).toxml()
+                xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
+                pretty_xml_as_string = xml_code.toprettyxml()
+                print(pretty_xml_as_string.rstrip())
+                return
+
+        print "AndroidManifest.xml was not found."
+
     '''
     Use baksmali to disassemble the APK.
     '''
@@ -123,10 +155,6 @@ class DroidCarve(Cmd):
     def disassemble_apk(self):
         print "Disassembling APK ..."
         call(["java", "-jar", BAKSMALI_PATH, "d", self.apk_file, "-o", self.cache_path])
-        print "Analyzing disassembled code ..."
-        self.code_parser.start()
-        print "Analyzing unzipped files ..."
-        self.file_parser.start()
 
     def unzip_apk(self):
         print "Unzipping APK ..."
@@ -158,14 +186,16 @@ def parse_arguments():
 def generate_cache():
     hash = hashlib.sha1(open(APK_FILE, 'rb').read()).hexdigest();
     print "Hash of APK file = " + hash
-    CACHE_PATH = os.getcwd() + "/"+hash + CACHE_PATH_SUFFIX
-    UNZIPPED_PATH = os.getcwd() + "/"+hash + UNZIPPED_PATH_SUFFIX
+    CACHE_PATH = os.getcwd() + "/" + hash + CACHE_PATH_SUFFIX
+    UNZIPPED_PATH = os.getcwd() + "/" + hash + UNZIPPED_PATH_SUFFIX
 
     if os.path.exists(CACHE_PATH) or os.path.exists(UNZIPPED_PATH):
         choice = ask_question("A cached version of the application has been found, start from a fresh cache?",
                               ["Yes", "No"])
         if choice == "No":
-            return CACHE_PATH, UNZIPPED_PATH
+            return CACHE_PATH, UNZIPPED_PATH, True
+        else:
+            return CACHE_PATH, UNZIPPED_PATH, False
 
     if not os.path.exists(CACHE_PATH):
         os.makedirs(CACHE_PATH)
@@ -173,7 +203,7 @@ def generate_cache():
     if not os.path.exists(UNZIPPED_PATH):
         os.makedirs(UNZIPPED_PATH)
 
-    return CACHE_PATH, UNZIPPED_PATH
+    return CACHE_PATH, UNZIPPED_PATH, False
 
 
 def ask_question(question, answers):
@@ -210,8 +240,8 @@ def has_baksmali():
 
 def main():
     parse_arguments()
-    (CACHE_PATH, UNZIPPED_PATH) = generate_cache()
-    droidcarve = DroidCarve(APK_FILE, CACHE_PATH, UNZIPPED_PATH)
+    (CACHE_PATH, UNZIPPED_PATH, FROM_CACHE) = generate_cache()
+    droidcarve = DroidCarve(APK_FILE, CACHE_PATH, UNZIPPED_PATH, FROM_CACHE)
     droidcarve.cmdloop()
 
 
