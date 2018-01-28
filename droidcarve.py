@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, argparse, fnmatch
+import os, argparse, fnmatch, utils
 from cmd import Cmd
 from subprocess import call
 import hashlib
@@ -76,8 +76,16 @@ class AndroidManifestParser():
         self.permissions = []
 
     def start(self):
-        pass
+        ap = AXMLPrinter(open(self.manifest, 'rb').read())
+        buff = minidom.parseString(ap.getBuff()).toxml()
+        xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
+        pretty_xml_as_string = xml_code.toprettyxml()
+        for line in pretty_xml_as_string.split("\n"):
+            if not line.find("<uses-permission") == -1:
+                self.permissions.append(line.split("\"")[1])
 
+    def get_permissions(self):
+        return self.permissions
 
 class FileParser():
 
@@ -101,6 +109,11 @@ class FileParser():
     def get_xml_files(self):
         return self.xml_files
 
+    def get_xml(self, name):
+        for xml_file in self.xml_files:
+            if xml_file.endswith(name):
+                return xml_file
+
 
 class DroidCarve(Cmd):
 
@@ -113,9 +126,7 @@ class DroidCarve(Cmd):
         self.file_parser = FileParser(unzip_path)
         self.code_parser = CodeParser(cache_path)
         self.from_cache = from_cache
-
-    def do_help(self, arg):
-        print "help yoo"
+        self.analysis = False
 
     def do_quit(self, arg):
         print 'Exiting, cheers!'
@@ -124,9 +135,29 @@ class DroidCarve(Cmd):
     def do_exit(self, arg):
         self.do_quit(arg)
 
+    def do_unzip(self, destination):
+        """
+        unzip
+
+        Unzip the Android application.
+
+        unzip [destination]
+
+        Unzip the Android application to a given destination.
+        """
+        self.unzip_apk(destination)
+
+
+
     def do_analyze(self, arg):
+        """
+        analyze
+
+        Analyze the Android application. Unzip and parse the files, disassemble and process Smali bytecode.
+        This step is mandatory before using almost any of the other processing steps.
+        """
         if not self.from_cache:
-            self.unzip_apk()
+
             self.disassemble_apk()
         else:
             print "Start analysis from cache ..."
@@ -135,32 +166,74 @@ class DroidCarve(Cmd):
         self.code_parser.start()
         print "Analyzing unzipped files ..."
         self.file_parser.start()
+
+        print "Analyzing AndroidManifest.xml ..."
+        self.manifest_parser = AndroidManifestParser(self.file_parser.get_xml("/AndroidManifest.xml"))
+        self.manifest_parser.start()
+        self.analysis = True
         print "Analyzing ... Done"
 
     def do_signature(self, arg):
+        """
+        signature
+
+        Print the application certificate in a human readable format.
+        This requires that the Java keytool binary is installed and in PATH.
+
+        In case no signature is found, make sure the application is signed and the 'analyze' is executed.
+        """
         files = self.file_parser.get_signature_files()
+
+        if len(files) == 0:
+            print "No signature files found, see 'help signature'."
+            return
+
         for f in files:
             print "Found signature file : " + f
             call(["keytool", "-printcert", "-file", f])
 
     def do_statistics(self, arg):
+
+        if not self.analysis:
+            print "Please analyze the APK before running this command."
+            return
+
         onlyfiles = len(fnmatch.filter(os.listdir(self.cache_path), '*.smali'))
         print 'Disassembled classes = ' + str(onlyfiles)
+        print 'Permissions          = ' + str(len(self.manifest_parser.get_permissions()))
 
-    def do_manifest(self, arg):
-        xmls = self.file_parser.get_xml_files()
-        for xml_file in xmls:
-            if xml_file.endswith("/AndroidManifest.xml"):
-                ap = AXMLPrinter(open(xml_file, 'rb').read())
-                buff = minidom.parseString(ap.getBuff()).toxml()
-                xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
-                pretty_xml_as_string = xml_code.toprettyxml()
-                lexer = get_lexer_by_name("xml", stripall=True)
-                formatter = Terminal256Formatter()
-                print (highlight(pretty_xml_as_string.rstrip(), lexer, formatter))
-                return
+    def do_manifest(self, option):
+        """
+        manifest
+        XML dump of the AndroidManifest.xml file.
 
-        print "AndroidManifest.xml was not found."
+        manifest p
+        List of extracted permissions.
+        """
+        xml_file = self.file_parser.get_xml("/AndroidManifest.xml")
+
+        if xml_file is None:
+            print "AndroidManifest.xml was not found."
+            return
+        if not option:
+            ap = AXMLPrinter(open(xml_file, 'rb').read())
+            buff = minidom.parseString(ap.getBuff()).toxml()
+            xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
+            pretty_xml_as_string = xml_code.toprettyxml()
+            lexer = get_lexer_by_name("xml", stripall=True)
+            formatter = Terminal256Formatter()
+            print (highlight(pretty_xml_as_string.rstrip(), lexer, formatter))
+
+        else:
+            if option == "p":
+                for perm in self.manifest_parser.get_permissions():
+                    if not perm.startswith("android."):
+                        utils.print_purple("\t"+perm)
+                    else:
+                        print "\t"+perm
+
+        return
+
 
     '''
     Use baksmali to disassemble the APK.
@@ -170,9 +243,13 @@ class DroidCarve(Cmd):
         print "Disassembling APK ..."
         call(["java", "-jar", BAKSMALI_PATH, "d", self.apk_file, "-o", self.cache_path])
 
-    def unzip_apk(self):
-        print "Unzipping APK ..."
-        call(["unzip", self.apk_file, "-d", self.unzip_path])
+    def unzip_apk(self, destination = None):
+        if destination is None or destination == "":
+            print "Unzipping APK ..."
+            call(["unzip", self.apk_file, "-d", self.unzip_path])
+        else:
+            print "Unzipping APK to %s ... " % destination
+            call(["unzip", self.apk_file, "-d", destination])
 
     def extract_strings(self):
         return
