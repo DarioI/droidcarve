@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, argparse, fnmatch, utils
+import os, argparse, fnmatch, utils,re
 from cmd import Cmd
 from subprocess import call
 import hashlib
@@ -113,9 +113,28 @@ class DroidCarve(Cmd):
             print "Please analyze the APK before running this command."
             return
 
-        onlyfiles = len(fnmatch.filter(os.listdir(self.cache_path), '*.smali'))
-        print 'Disassembled classes = ' + str(onlyfiles)
+        print 'Disassembled classes = ' + str(len(self.code_parser.get_classes()))
         print 'Permissions          = ' + str(len(self.manifest_parser.get_permissions()))
+
+    def do_classes(self, arg):
+        args = arg.split(" ")
+        classes = self.code_parser.get_classes()
+
+        if not arg:
+            utils.print_blue("Found %s classes" % str(len(classes)))
+
+        if args[0] == "find":
+            if len(args) == 1:
+                utils.print_red("Please specify a regex to match a class name.")
+            else:
+                regex = args[1]
+                if utils.is_valid_regex(regex):
+                    pattern = re.compile(regex)
+                    for clazz in classes:
+                        if pattern.match(clazz["name"]):
+                            print clazz["name"]
+                else:
+                    utils.print_red("Invalid regex.")
 
     def do_manifest(self, option):
         """

@@ -6,3 +6,10 @@ CALLING_OPCODES = [
     'invoke-interface',
     'invoke-custom'
 ]
+
+CLASS_ANNOTATION = '.class'
+INTERFACE_ANNOTATION = '.implements'
+ANNOTATION = ".annotation"
+END = ".end"
+SOURCE_ANNOTATION = '.source'
+SUPER_ANNOTATION = ".super"

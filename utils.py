@@ -1,3 +1,5 @@
+import re
+
 class TextStyle:
     PURPLE = '\033[95m'
     BLUE = '\033[94m'
@@ -16,3 +18,10 @@ def print_blue(text):
 
 def print_red(text):
     print TextStyle.RED + text + TextStyle.ENDC
+
+def is_valid_regex(regex):
+    try:
+        re.compile(regex)
+        return True
+    except re.error:
+        return False

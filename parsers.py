@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import os, constants, re, utils
 
 from xml.dom import minidom
 from axmlparserpy.axmlprinter import AXMLPrinter
@@ -28,6 +28,8 @@ class CodeParser():
 
     def __init__(self, code_path):
         self.code_path = code_path
+        self.classes = []
+        self.strings = []
 
     '''
     Extract class name from a smali source line. Every class name is represented
@@ -44,12 +46,23 @@ class CodeParser():
             for file in files:
                 full_path = os.path.join(subdir, file)
                 with open(full_path, 'r') as f:
-                    continue_loop = True;
+                    continue_loop = True
+                    line_number = 1
+                    temp_clazz = {}
                     for line in f:
-                        if line.startswith(".class"):
-                            class_line = line.strip("\n")  # extract the class line; always first line
-                            class_name = self.extract_class_name(class_line)  # extract the class descriptor
-                            # print class_name
+                        if self.is_class(line):
+                            temp_clazz = self.extract_class(line)
+                            self.classes.append(temp_clazz)
+
+                        if self.is_const_string(line):
+                            string = self.extract_const_string(line)['value']
+                            self.strings.append(string)
+                            if temp_clazz:
+                                temp_clazz["const-strings"].append(string)
+
+                        if self.is_method_call(line):
+                            pass
+                        #self.detect_crypto(line)
 
                         # if line.lstrip().startswith("const-string"):
                         # print line
@@ -57,8 +70,114 @@ class CodeParser():
                     if not continue_loop:
                         continue
 
+        print "Found %s classes" % str(len(self.classes))
+        print "Found %s strings" % str(len(self.strings))
 
-class AndroidManifestParser():
+    def is_class(self, line):
+        match = re.search("\.class\s+(?P<class>.*);", line)
+        if match:
+            return True
+        else:
+            return False
+
+    def is_const_string(self, line):
+        match = re.search("const-string\s+(?P<const>.*)", line)
+        if match:
+            return True
+        else:
+            return False
+
+    def extract_const_string(self, data):
+
+        match = re.search('(?P<var>.*),\s+"(?P<value>.*)"', data)
+
+        if match:
+
+            string = {
+                # Variable
+                'name': match.group('var'),
+
+                # Value of string
+                'value': match.group('value')
+            }
+
+            return string
+        else:
+            return None
+
+    def extract_class(self, data):
+
+        class_info = data.split(" ")
+        c = {
+            # Last element is the class name
+            'name': class_info[-1],
+
+            # Package name
+            'package': ".".join(class_info[-1].split('/')[:-1]),
+
+            # Class deepth
+            'depth': len(class_info[-1].split("/")),
+
+            # All elements refer to the type of class
+            'type': " ".join(class_info[:-1]),
+
+            # Properties
+            'properties': [],
+
+            # Const strings
+            'const-strings': [],
+
+            # Methods
+            'methods': []
+        }
+
+        return c
+
+    def detect_crypto(self,code_line):
+        if not self._is_smali_code(code_line):
+            return
+        code_line = code_line.lstrip()
+        opcode = self._get_opcode(code_line)
+        print opcode
+
+    def is_method_call(self, line):
+        match = re.search("invoke-\w+(?P<invoke>.*)", line)
+        if match:
+            return True
+        else:
+            return False
+
+    def _is_smali_code(self, code_line):
+        code_line = code_line.lstrip().replace("\n","")
+
+        if code_line.startswith(constants.CLASS_ANNOTATION):
+            return False
+
+        if code_line.startswith(constants.ANNOTATION):
+            return False
+
+        if code_line.startswith(constants.INTERFACE_ANNOTATION):
+            return False
+
+        if code_line.startswith(constants.SUPER_ANNOTATION):
+            return False
+
+        if code_line.startswith(constants.SOURCE_ANNOTATION):
+            return False
+
+        if code_line.startswith(constants.END):
+            return False
+
+        return True
+
+    def _get_opcode(self, code_line):
+        return code_line.split(" ")[0]
+
+    def get_classes(self):
+        return self.classes
+
+
+class AndroidManifestParser:
 
     def __init__(self, manifest_xml_file):
         self.manifest = manifest_xml_file
