@@ -44,6 +44,7 @@ class DroidCarve(Cmd):
         self.code_parser = CodeParser(cache_path)
         self.from_cache = from_cache
         self.analysis = False
+        self.excludes = []
 
     def do_quit(self, arg):
         print 'Exiting, cheers!'
@@ -88,6 +89,23 @@ class DroidCarve(Cmd):
         self.analysis = True
         print "Analyzing ... Done"
 
+    def do_exclude(self, arg):
+
+        if not arg:
+            print "Exclusion list:"
+            print self.excludes
+            return
+
+        args = arg.split(" ")
+
+        if args[0] == "clear":
+            self.excludes = []
+            utils.print_blue("Exclusion list cleared.")
+        elif utils.is_valid_regex(args[0]):
+            self.excludes.append(args[0])
+        else:
+            utils.print_red("No valid exclusion regex provided.")
+
     def do_signature(self, arg):
         """
         signature
@@ -131,10 +149,11 @@ class DroidCarve(Cmd):
                 if utils.is_valid_regex(regex):
                     pattern = re.compile(regex)
                     for clazz in classes:
-                        if pattern.match(clazz["name"]):
+                        if pattern.match(clazz["name"]) and not self.is_excluded(clazz["name"]):
                             print clazz["name"]
                 else:
                     utils.print_red("Invalid regex.")
+
 
     def do_manifest(self, option):
         """
@@ -183,6 +202,14 @@ class DroidCarve(Cmd):
 
     def extract_strings(self):
         return
+
+    def is_excluded(self, candidate):
+        for regex in self.excludes:
+            pattern = re.compile(regex)
+            if pattern.match(candidate):
+                return True
+
+        return False
 
 
 '''

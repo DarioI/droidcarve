@@ -51,7 +51,7 @@ class CodeParser():
                     temp_clazz = {}
                     for line in f:
                         if self.is_class(line):
-                            temp_clazz = self.extract_class(line)
+                            temp_clazz = self.extract_class(line, full_path)
                             self.classes.append(temp_clazz)
 
                         if self.is_const_string(line):
@@ -60,8 +60,18 @@ class CodeParser():
                             if temp_clazz:
                                 temp_clazz["const-strings"].append(string)
 
-                        if self.is_method_call(line):
+                        elif '.method' in line: #class methods
+                            if self.is_class_method(line):
+                                class_method = self.extract_class_method(line)
+                                utils.print_blue("Class %s method: %s" % (temp_clazz['name'], class_method['name']))
                             pass
+
+                        elif 'invoke' in line:
+                            if self.is_method_call(line):
+                                method_call = self.extract_method_call(line)
+                                utils.print_red("Method %s in class %s" % (method_call['to_method'], method_call['to_class']))
+                            pass
+
                         #self.detect_crypto(line)
 
                         # if line.lstrip().startswith("const-string"):
@@ -72,6 +82,53 @@ class CodeParser():
 
         print "Found %s classes" % str(len(self.classes))
         print "Found %s strings" % str(len(self.strings))
+
+    def is_method_call(self, line):
+        match = re.search("invoke-\w+(?P<invoke>.*)", line)
+        if match:
+            return True
+        else:
+            return False
+
+    def extract_method_call(self, data):
+        # Default values
+        c_dst_class = data
+        c_dst_method = None
+        c_local_args = None
+        c_dst_args = None
+        c_ret = None
+
+        # The call looks like this
+        #  <destination class>) -> <method>(args)<return value>
+        match = re.search(
+            '(?P<local_args>\{.*\}),\s+(?P<dst_class>.*);->' +
+            '(?P<dst_method>.*)\((?P<dst_args>.*)\)(?P<return>.*)', data)
+
+        if match:
+            c_dst_class = match.group('dst_class')
+            c_dst_method = match.group('dst_method')
+            c_dst_args = match.group('dst_args')
+            c_local_args = match.group('local_args')
+            c_ret = match.group('return')
+
+        method = {
+            # Destination class
+            'to_class': c_dst_class,
+
+            # Destination method
+            'to_method': c_dst_method,
+
+            # Local arguments
+            'local_args': c_local_args,
+
+            # Destination arguments
+            'dst_args': c_dst_args,
+
+            # Return value
+            'return': c_ret
+        }
+
+        return method
 
     def is_class(self, line):
         match = re.search("\.class\s+(?P<class>.*);", line)
@@ -105,7 +162,7 @@ class CodeParser():
         else:
             return None
 
-    def extract_class(self, data):
+    def extract_class(self, data, file_path):
 
         class_info = data.split(" ")
         c = {
@@ -123,6 +180,9 @@ class CodeParser():
 
             # Properties
             'properties': [],
+
+            # File
+            'file-path': file_path,
 
             # Const strings
             'const-strings': [],
@@ -175,6 +235,51 @@ class CodeParser():
 
     def get_classes(self):
         return self.classes
+
+    def is_class_method(self, line):
+        match = re.search("\.method\s+(?P<method>.*)$", line)
+        if match:
+            return True
+        else:
+            return False
+
+    def extract_class_method(self, data):
+
+        method_info = data.split(" ")
+
+        # A method looks like:
+        #  <name>(<arguments>)<return value>
+        m_name = method_info[-1]
+        m_args = None
+        m_ret = None
+
+        # Search for name, arguments and return value
+        match = re.search(
+            "(?P<name>.*)\((?P<args>.*)\)(?P<return>.*)", method_info[-1])
+
+        if match:
+            m_name = match.group('name')
+            m_args = match.group('args')
+            m_ret = match.group('return')
+
+        method = {
+            # Method name
+            'name': m_name,
+
+            # Arguments
+            'args': m_args,
+
+            # Return value
+            'return': m_ret,
+
+            # Additional info such as public static etc.
+            'type': " ".join(method_info[:-1]),
+
+            # Calls
+            'calls': []
+        }
+
+        return method
 
 
 class AndroidManifestParser:
