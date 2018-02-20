@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, argparse, fnmatch, utils,re
+import os, argparse, fnmatch, utils, re
 from cmd import Cmd
 from subprocess import call
 import hashlib
@@ -91,6 +91,21 @@ class DroidCarve(Cmd):
 
     def do_exclude(self, arg):
 
+        """
+        exclude
+
+        List the current list of exclusion filters.
+
+        exclude [regex]
+
+        Add a given regex to the exclusion list. All the classes or methods that match this regex will be excluded from
+        results that are prented to the command line.
+
+        exclude clear
+
+        Clear the current list of regexes.
+        """
+
         if not arg:
             print "Exclusion list:"
             print self.excludes
@@ -127,6 +142,12 @@ class DroidCarve(Cmd):
 
     def do_statistics(self, arg):
 
+        """
+        unzip
+
+        Print some statistics about the Android application.
+        """
+
         if not self.analysis:
             print "Please analyze the APK before running this command."
             return
@@ -135,6 +156,16 @@ class DroidCarve(Cmd):
         print 'Permissions          = ' + str(len(self.manifest_parser.get_permissions()))
 
     def do_classes(self, arg):
+
+        """
+        classes
+
+        Print how much classes are disassembled.
+
+        classes find [regex]
+
+        Print the disassembled classes that match the regex.
+        """
         args = arg.split(" ")
         classes = self.code_parser.get_classes()
 
@@ -153,7 +184,6 @@ class DroidCarve(Cmd):
                             print clazz["name"]
                 else:
                     utils.print_red("Invalid regex.")
-
 
     def do_manifest(self, option):
         """
