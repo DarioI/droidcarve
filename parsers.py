@@ -63,13 +63,13 @@ class CodeParser():
                         elif '.method' in line: #class methods
                             if self.is_class_method(line):
                                 class_method = self.extract_class_method(line)
-                                utils.print_blue("Class %s method: %s" % (temp_clazz['name'], class_method['name']))
+                                #utils.print_blue("Class %s method: %s" % (temp_clazz['name'], class_method['name']))
                             pass
 
                         elif 'invoke' in line:
                             if self.is_method_call(line):
                                 method_call = self.extract_method_call(line)
-                                utils.print_red("Method %s in class %s" % (method_call['to_method'], method_call['to_class']))
+                                #utils.print_red("Method %s in class %s" % (method_call['to_method'], method_call['to_class']))
                             pass
 
                         #self.detect_crypto(line)

@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, argparse, fnmatch, utils, re
+import os, argparse, utils, re
 from cmd import Cmd
 from subprocess import call
 import hashlib
@@ -23,6 +23,7 @@ from parsers import FileParser, AndroidManifestParser, CodeParser
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters.terminal256 import Terminal256Formatter
+from source_window import SourceCodeWindow
 
 __author__ = 'Dario Incalza <dario.incalza@gmail.com>'
 
@@ -185,6 +186,13 @@ class DroidCarve(Cmd):
                 else:
                     utils.print_red("Invalid regex.")
 
+        elif args[0] == "open":
+            for clazz in classes:
+                if clazz["name"].rstrip("\n") == args[1]:
+                    print "Opening file: %s " % clazz["file-path"]
+                    scWin = SourceCodeWindow(clazz["file-path"], clazz["name"])
+                    scWin.run()
+
     def do_manifest(self, option):
         """
         manifest
@@ -285,13 +293,14 @@ def generate_cache():
 
 
 def ask_question(question, answers):
-    while (True):
-        print question
-        for a in answers:
-            print "- " + a
-        choice = raw_input("Choice: ")
-        if choice in answers:
-            return choice
+    print question
+    for a in answers:
+        print "- " + a
+    choice = raw_input("Choice: ")
+    if choice in answers:
+        return choice
+    else:
+        ask_question(question, answers)
 
 
 '''
