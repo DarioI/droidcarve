@@ -10,7 +10,22 @@ CALLING_OPCODES = [
 CRYPTO_CLASSES = [
     'Ljavax/crypto/Cipher',
     'Ljavax/crypto/SecretKey',
-    'Ljavax/crypto/spec/SecretKeySpec'
+    'Ljavax/crypto/spec/SecretKeySpec',
+    'Ljavax/crypto/spec/PBEKeySpec',
+    'Lorg/spongycastle/jce/provider/BouncyCastleProvider'
+]
+
+DYNAMIC_LOADING_CLASSES = [
+    'Ldalvik/system/PathClassLoader',
+    'Ldalvik/system/BaseDexClassLoader',
+    'Ldalvik/system/InMemoryDexClassLoader',
+    'Ljava/net/URLClassLoader',
+    'Ljava/security/SecureClassLoader'
+]
+
+SAFETYNET_CLASSES = [
+    'Lcom/google/android/gms/safetynet/SafetyNetClient',
+    'Lcom/google/android/gms/safetynet/SafetyNetApi'
 ]
 
 CLASS_ANNOTATION = '.class'

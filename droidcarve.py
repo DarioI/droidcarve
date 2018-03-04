@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, argparse, utils, re, json
+import os, argparse, utils, re
 from cmd import Cmd
 from subprocess import call
 import hashlib
@@ -24,7 +24,6 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters.terminal256 import Terminal256Formatter
 from source_window import SourceCodeWindow
-
 
 __author__ = 'Dario Incalza <dario.incalza@gmail.com>'
 
@@ -107,12 +106,47 @@ class DroidCarve(Cmd):
             return
 
         else:
-            for crypto_clazz, list_calls in crypto_classes.iteritems():
-                utils.print_blue(crypto_clazz+ " (%s) " % str(len(list_calls)))
-                for clazz in list_calls:
-                    utils.print_purple("\t - %s " % clazz['name'])
+            self._prettyprintdict(crypto_classes)
 
+    def _prettyprintdict(self, dictionary):
+        for key, value in dictionary.iteritems():
+            utils.print_blue(key + " (%s) " % str(len(value)))
+            for clazz in value:
+                utils.print_purple("\t - %s " % clazz['name'])
 
+    def do_dynamic(self, arg):
+        """
+        dynamic
+
+        Print classes where dynamic code loading calls have been found.
+        """
+
+        dynamic_classes = self.code_parser.get_dynamic()
+
+        if len(dynamic_classes) == 0:
+            utils.print_blue("No dynamic code loading calls found. Maybe they are obfuscated using reflection calls "
+                             "or the app simply does not use any dynamic code loading.")
+            return
+
+        else:
+            self._prettyprintdict(dynamic_classes)
+
+    def do_safetynet(self, arg):
+        """
+        safetynet
+
+        Print classes where SafetyNet calls have been found.
+        """
+
+        safetynet_clazz = self.code_parser.get_safetynet()
+
+        if len(safetynet_clazz) == 0:
+            utils.print_blue("No SafetyNet calls found. Maybe they are obfuscated using reflection calls "
+                             "or the app simply does not use the SafetyNet API.")
+            return
+
+        else:
+            self._prettyprintdict(safetynet_clazz)
 
     def do_exclude(self, arg):
 
@@ -165,10 +199,11 @@ class DroidCarve(Cmd):
             print "Found signature file : " + f
             call(["keytool", "-printcert", "-file", f])
 
+
     def do_statistics(self, arg):
 
         """
-        unzip
+        statistics
 
         Print some statistics about the Android application.
         """
@@ -177,9 +212,20 @@ class DroidCarve(Cmd):
             print "Please analyze the APK before running this command."
             return
 
-        print 'Disassembled classes = ' + str(len(self.code_parser.get_classes()))
-        print 'Permissions          = ' + str(len(self.manifest_parser.get_permissions()))
-        print 'Crypto Operations    = ' + str(len(self.code_parser.get_crypto()))
+        print 'Disassembled classes     = %i' % len(self.code_parser.get_classes())
+        print 'Permissions              = %i' % len(self.manifest_parser.get_permissions())
+        print 'Crypto Operations        = %i' % len(self.code_parser.get_crypto())
+        print 'Dynamic Code Loading     = %i' % len(self.code_parser.get_dynamic())
+        print 'SafetyNet Calls          = %i' % len(self.code_parser.get_safetynet())
+
+    def do_stats(self, arg):
+
+        """
+        statistics
+
+        Print some statistics about the Android application.
+        """
+        return self.do_statistics(arg)
 
     def do_classes(self, arg):
 
@@ -213,7 +259,13 @@ class DroidCarve(Cmd):
 
         elif args[0] == "open":
             for clazz in classes:
-                if clazz["name"].rstrip("\n") == args[1]:
+
+                clazz_name = arg[1]
+
+                if not clazz_name.endswith(';'):
+                    clazz_name = clazz_name+';'
+
+                if clazz["name"].rstrip("\n") == clazz_name:
                     print "Opening file: %s " % clazz["file-path"]
                     scWin = SourceCodeWindow(clazz["file-path"], clazz["name"])
                     scWin.run()

@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, constants, re, utils
+import os, constants, re
 
 from xml.dom import minidom
 from axmlparserpy.axmlprinter import AXMLPrinter
@@ -229,14 +229,27 @@ def extract_class_method(data):
     return method
 
 
-class CodeParser():
+def is_dynamic(class_being_called):
+    if class_being_called in constants.DYNAMIC_LOADING_CLASSES:
+        return class_being_called
+    return None
+
+
+def is_safetynet(class_being_called):
+    if class_being_called in constants.SAFETYNET_CLASSES:
+        return class_being_called
+    return None
+
+
+class CodeParser:
 
     def __init__(self, code_path):
         self.code_path = code_path
         self.classes = []
         self.strings = []
         self.crypto_calls = {}
-
+        self.dynamic_load_calls = {}
+        self.safetynet_calls = {}
     '''
     Extract class name from a smali source line. Every class name is represented
     as a classdescriptor that starts zith 'L' and ends with ';'.
@@ -274,11 +287,9 @@ class CodeParser():
                         elif 'invoke' in line:
                             if is_method_call(line):
                                 method_call = extract_method_call(line)
-                                if is_crypto(method_call['to_class']):
-                                    if method_call['to_class'] in self.crypto_calls:
-                                        self.crypto_calls[method_call['to_class']].append(temp_clazz)
-                                    else:
-                                        self.crypto_calls[method_call['to_class']] = [temp_clazz]
+                                self.process_crypto(method_call, temp_clazz)
+                                self.proces_dynamic(method_call, temp_clazz)
+                                self.proces_safetynet(method_call, temp_clazz)
 
                     if not continue_loop:
                         continue
@@ -286,12 +297,39 @@ class CodeParser():
         print "Found %s classes" % str(len(self.classes))
         print "Found %s strings" % str(len(self.strings))
 
+    def process_crypto(self, method_call, temp_clazz):
+        if is_crypto(method_call['to_class']):
+            if method_call['to_class'] in self.crypto_calls:
+                self.crypto_calls[method_call['to_class']].append(temp_clazz)
+            else:
+                self.crypto_calls[method_call['to_class']] = [temp_clazz]
+    
+    def proces_dynamic(self, method_call, temp_clazz):
+        if is_dynamic(method_call['to_class']):
+            if method_call['to_class'] in self.dynamic_load_calls:
+                self.dynamic_load_calls[method_call['to_class']].append(temp_clazz)
+            else:
+                self.dynamic_load_calls[method_call['to_class']] = [temp_clazz]
+    
+    def proces_safetynet(self, method_call, temp_clazz):
+        if is_safetynet(method_call['to_class']):
+            if method_call['to_class'] in self.safetynet_calls:
+                self.safetynet_calls[method_call['to_class']].append(temp_clazz)
+            else:
+                self.safetynet_calls[method_call['to_class']] = [temp_clazz]
+    
+
     def get_classes(self):
-        return self.classes
+       return self.classes
 
     def get_crypto(self):
         return self.crypto_calls
 
+    def get_dynamic(self):
+        return self.dynamic_load_calls
+
+    def get_safetynet(self):
+        return self.safetynet_calls
 
 class AndroidManifestParser:
 
