@@ -7,6 +7,12 @@ CALLING_OPCODES = [
     'invoke-custom'
 ]
 
+CRYPTO_CLASSES = [
+    'Ljavax/crypto/Cipher',
+    'Ljavax/crypto/SecretKey',
+    'Ljavax/crypto/spec/SecretKeySpec'
+]
+
 CLASS_ANNOTATION = '.class'
 INTERFACE_ANNOTATION = '.implements'
 ANNOTATION = ".annotation"

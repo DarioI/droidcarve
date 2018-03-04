@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, argparse, utils, re
+import os, argparse, utils, re, json
 from cmd import Cmd
 from subprocess import call
 import hashlib
@@ -24,6 +24,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters.terminal256 import Terminal256Formatter
 from source_window import SourceCodeWindow
+
 
 __author__ = 'Dario Incalza <dario.incalza@gmail.com>'
 
@@ -90,6 +91,29 @@ class DroidCarve(Cmd):
         self.analysis = True
         print "Analyzing ... Done"
 
+    def do_crypto(self, arg):
+
+        """
+        crypto
+
+        Print classes where cryptographic calls have been found.
+        """
+
+        crypto_classes = self.code_parser.get_crypto()
+
+        if len(crypto_classes) == 0:
+            utils.print_blue("No cryptographic calls found. Maybe they are obfuscated using reflection calls, "
+                             "an unkown third party has been used or the app simply does not use any crypto.")
+            return
+
+        else:
+            for crypto_clazz, list_calls in crypto_classes.iteritems():
+                utils.print_blue(crypto_clazz+ " (%s) " % str(len(list_calls)))
+                for clazz in list_calls:
+                    utils.print_purple("\t - %s " % clazz['name'])
+
+
+
     def do_exclude(self, arg):
 
         """
@@ -100,7 +124,7 @@ class DroidCarve(Cmd):
         exclude [regex]
 
         Add a given regex to the exclusion list. All the classes or methods that match this regex will be excluded from
-        results that are prented to the command line.
+        results that are printed to the command line.
 
         exclude clear
 
@@ -155,6 +179,7 @@ class DroidCarve(Cmd):
 
         print 'Disassembled classes = ' + str(len(self.code_parser.get_classes()))
         print 'Permissions          = ' + str(len(self.manifest_parser.get_permissions()))
+        print 'Crypto Operations    = ' + str(len(self.code_parser.get_crypto()))
 
     def do_classes(self, arg):
 
@@ -257,7 +282,8 @@ Parse the arguments and assign global variables that we will be using throughout
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description='DroidCarve is capable of analyzing an Android APK file and automate certain reverse engineering tasks. For a full list of features, please see the help function.')
+        description='DroidCarve is capable of analyzing an Android APK file and automate certain reverse engineering '
+                    'tasks. For a full list of features, please see the help function.')
     parser.add_argument('-a', '--apk', type=str, help='APK file to analyze',
                         required=True)
 
