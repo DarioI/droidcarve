@@ -334,6 +334,10 @@ class CodeParser:
 class AndroidManifestParser:
 
     def __init__(self, manifest_xml_file):
+
+        if manifest_xml_file is None:
+            raise TypeError
+
         self.manifest = manifest_xml_file
         self.permissions = []
 

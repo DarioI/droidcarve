@@ -258,10 +258,11 @@ class DroidCarve(Cmd):
                     utils.print_red("Invalid regex.")
 
         elif args[0] == "open":
+
+            clazz_name = args[1]
+            
             for clazz in classes:
-
-                clazz_name = arg[1]
-
+                
                 if not clazz_name.endswith(';'):
                     clazz_name = clazz_name+';'
 
