@@ -23,9 +23,9 @@ python droidcarve.py -a yourapplication.apk
 * Code disassembling into Smali bytecode
 * APK signature extraction
 * AndroidManifest parsing: permissions, services, intents, package information etc
+* Code parsing: strings, cryptography, dynamic code loading, URLs etc.
 
 ## Roadmap
-* Code parsing: strings, cryptography, dynamic code loading, native libraries etc.
 * Java source code navigation
 * Static detection of privacy leaks
 
