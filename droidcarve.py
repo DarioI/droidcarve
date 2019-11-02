@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, argparse, utils, re
+import os, argparse, re
+import utils
 from cmd import Cmd
 from subprocess import call
 import hashlib
@@ -33,6 +34,13 @@ CACHE_PATH_SUFFIX = "/cache/"
 UNZIPPED_PATH_SUFFIX = "/unzipped/"
 
 
+def _prettyprintdict(dictionary):
+    for key, value in dictionary.items():
+        utils.print_blue(key + " (%s) " % str(len(value)))
+        for clazz in value:
+            utils.print_purple("\t - %s " % clazz['name'])
+
+
 class DroidCarve(Cmd):
 
     def __init__(self, apk_file, cache_path, unzip_path, from_cache=False):
@@ -48,7 +56,7 @@ class DroidCarve(Cmd):
         self.excludes = []
 
     def do_quit(self, arg):
-        print 'Exiting, cheers!'
+        print('Exiting, cheers!')
         exit(0)
 
     def do_exit(self, arg):
@@ -66,7 +74,7 @@ class DroidCarve(Cmd):
         """
         self.unzip_apk(destination)
 
-    def do_analyze(self, arg):
+    def pre_analyze(self):
         """
         analyze
 
@@ -74,21 +82,21 @@ class DroidCarve(Cmd):
         This step is mandatory before using almost any of the other processing steps.
         """
         if not self.from_cache:
-
+            self.unzip_apk()
             self.disassemble_apk()
         else:
-            print "Start analysis from cache ..."
+            print("Start analysis from cache ...")
 
-        print "Analyzing disassembled code ..."
+        print("Analyzing disassembled code ...")
         self.code_parser.start()
-        print "Analyzing unzipped files ..."
+        print("Analyzing unzipped files ...")
         self.file_parser.start()
 
-        print "Analyzing AndroidManifest.xml ..."
+        print("Analyzing AndroidManifest.xml ...")
         self.manifest_parser = AndroidManifestParser(self.file_parser.get_xml("/AndroidManifest.xml"))
         self.manifest_parser.start()
         self.analysis = True
-        print "Analyzing ... Done"
+        print("Analyzing ... Done")
 
     def do_crypto(self, arg):
 
@@ -106,13 +114,7 @@ class DroidCarve(Cmd):
             return
 
         else:
-            self._prettyprintdict(crypto_classes)
-
-    def _prettyprintdict(self, dictionary):
-        for key, value in dictionary.iteritems():
-            utils.print_blue(key + " (%s) " % str(len(value)))
-            for clazz in value:
-                utils.print_purple("\t - %s " % clazz['name'])
+            _prettyprintdict(crypto_classes)
 
     def do_dynamic(self, arg):
         """
@@ -129,7 +131,23 @@ class DroidCarve(Cmd):
             return
 
         else:
-            self._prettyprintdict(dynamic_classes)
+            _prettyprintdict(dynamic_classes)
+
+    def do_urls(self, arg):
+        """
+        urls
+
+        Print urls that have been found have been found.
+        """
+
+        urls = self.code_parser.get_urls()
+
+        if len(urls) == 0:
+            utils.print_blue("Nu URLs were found.")
+            return
+
+        else:
+            print(urls)
 
     def do_safetynet(self, arg):
         """
@@ -146,7 +164,7 @@ class DroidCarve(Cmd):
             return
 
         else:
-            self._prettyprintdict(safetynet_clazz)
+            _prettyprintdict(safetynet_clazz)
 
     def do_exclude(self, arg):
 
@@ -166,8 +184,8 @@ class DroidCarve(Cmd):
         """
 
         if not arg:
-            print "Exclusion list:"
-            print self.excludes
+            print("Exclusion list:")
+            print(self.excludes)
             return
 
         args = arg.split(" ")
@@ -192,11 +210,11 @@ class DroidCarve(Cmd):
         files = self.file_parser.get_signature_files()
 
         if len(files) == 0:
-            print "No signature files found, see 'help signature'."
+            print("No signature files found, see 'help signature'.")
             return
 
         for f in files:
-            print "Found signature file : " + f
+            print("Found signature file : " + f)
             call(["keytool", "-printcert", "-file", f])
 
 
@@ -209,14 +227,15 @@ class DroidCarve(Cmd):
         """
 
         if not self.analysis:
-            print "Please analyze the APK before running this command."
+            print("Please analyze the APK before running this command.")
             return
 
-        print 'Disassembled classes     = %i' % len(self.code_parser.get_classes())
-        print 'Permissions              = %i' % len(self.manifest_parser.get_permissions())
-        print 'Crypto Operations        = %i' % len(self.code_parser.get_crypto())
-        print 'Dynamic Code Loading     = %i' % len(self.code_parser.get_dynamic())
-        print 'SafetyNet Calls          = %i' % len(self.code_parser.get_safetynet())
+        print('Disassembled classes     = %i' % len(self.code_parser.get_classes()))
+        print('Permissions              = %i' % len(self.manifest_parser.get_permissions()))
+        print('Crypto Operations        = %i' % len(self.code_parser.get_crypto()))
+        print('Dynamic Code Loading     = %i' % len(self.code_parser.get_dynamic()))
+        print('SafetyNet Calls          = %i' % len(self.code_parser.get_safetynet()))
+        print('Hardcoded URLS           = %i' % len(self.code_parser.get_urls()))
 
     def do_stats(self, arg):
 
@@ -253,7 +272,7 @@ class DroidCarve(Cmd):
                     pattern = re.compile(regex)
                     for clazz in classes:
                         if pattern.match(clazz["name"]) and not self.is_excluded(clazz["name"]):
-                            print clazz["name"]
+                            print(clazz["name"])
                 else:
                     utils.print_red("Invalid regex.")
 
@@ -267,7 +286,7 @@ class DroidCarve(Cmd):
                     clazz_name = clazz_name+';'
 
                 if clazz["name"].rstrip("\n") == clazz_name:
-                    print "Opening file: %s " % clazz["file-path"]
+                    print("Opening file: %s " % clazz["file-path"])
                     scWin = SourceCodeWindow(clazz["file-path"], clazz["name"])
                     scWin.run()
 
@@ -282,7 +301,7 @@ class DroidCarve(Cmd):
         xml_file = self.file_parser.get_xml("/AndroidManifest.xml")
 
         if xml_file is None:
-            print "AndroidManifest.xml was not found."
+            print("AndroidManifest.xml was not found.")
             return
         if not option:
             xml_source = self.manifest_parser.get_xml()
@@ -296,7 +315,7 @@ class DroidCarve(Cmd):
                     if not perm.startswith("android."):
                         utils.print_purple("\t" + perm)
                     else:
-                        print "\t" + perm
+                        print("\t" + perm)
 
         return
 
@@ -305,15 +324,15 @@ class DroidCarve(Cmd):
     '''
 
     def disassemble_apk(self):
-        print "Disassembling APK ..."
+        print("Disassembling APK ...")
         call(["java", "-jar", BAKSMALI_PATH, "d", self.apk_file, "-o", self.cache_path])
 
     def unzip_apk(self, destination=None):
         if destination is None or destination == "":
-            print "Unzipping APK ..."
+            print("Unzipping APK ...")
             call(["unzip", self.apk_file, "-d", self.unzip_path])
         else:
-            print "Unzipping APK to %s ... " % destination
+            print("Unzipping APK to %s ... " % destination)
             call(["unzip", self.apk_file, "-d", destination])
 
     def extract_strings(self):
@@ -350,7 +369,7 @@ def parse_arguments():
 
 def generate_cache():
     hash = hashlib.sha1(open(APK_FILE, 'rb').read()).hexdigest();
-    print "Hash of APK file = " + hash
+    print("Hash of APK file = " + hash)
     CACHE_PATH = os.getcwd() + "/" + hash + CACHE_PATH_SUFFIX
     UNZIPPED_PATH = os.getcwd() + "/" + hash + UNZIPPED_PATH_SUFFIX
 
@@ -372,10 +391,10 @@ def generate_cache():
 
 
 def ask_question(question, answers):
-    print question
+    print(question)
     for a in answers:
-        print "- " + a
-    choice = raw_input("Choice: ")
+        print("- " + a)
+    choice = input("Choice: ")
     if choice in answers:
         return choice
     else:
@@ -391,7 +410,7 @@ TODO: implement more specific check to see if it is a valid APK file
 
 def check_apk_file():
     if APK_FILE == "" or not os.path.isfile(APK_FILE):
-        print "No APK file specified, exiting."
+        print("No APK file specified, exiting.")
         exit(3)
 
 
@@ -408,13 +427,14 @@ def main():
     parse_arguments()
     (CACHE_PATH, UNZIPPED_PATH, FROM_CACHE) = generate_cache()
     droidcarve = DroidCarve(APK_FILE, CACHE_PATH, UNZIPPED_PATH, FROM_CACHE)
+    droidcarve.pre_analyze()
     droidcarve.cmdloop()
 
 
 if __name__ == "__main__":
 
     if not has_baksmali():
-        print "No baksmali.jar found in " + BAKSMALI_PATH
+        print("No baksmali.jar found in " + BAKSMALI_PATH)
         exit(2)
 
     main()

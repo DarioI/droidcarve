@@ -1,2 +1,2 @@
-axmlparserpy
+axmlparserpy==0.0.4
 pygments

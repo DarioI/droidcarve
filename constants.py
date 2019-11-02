@@ -10,9 +10,13 @@ CALLING_OPCODES = [
 CRYPTO_CLASSES = [
     'Ljavax/crypto/Cipher',
     'Ljavax/crypto/SecretKey',
+    'Ljavax/crypto/Mac',
+    'Ljavax/crypto/KeyGenerator',
+    'Ljavax/crypto/KeyAgreement',
     'Ljavax/crypto/spec/SecretKeySpec',
     'Ljavax/crypto/spec/PBEKeySpec',
-    'Lorg/spongycastle/jce/provider/BouncyCastleProvider'
+    'Lorg/spongycastle/jce/provider/BouncyCastleProvider',
+    'Lcom/android/security/KeyChain',
 ]
 
 DYNAMIC_LOADING_CLASSES = [

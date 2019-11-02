@@ -15,13 +15,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, constants, re
+import os, re
+import constants
 
 from xml.dom import minidom
 from axmlparserpy.axmlprinter import AXMLPrinter
 import xml.dom.minidom
 
 __author__ = 'Dario Incalza <dario.incalza@gmail.com>'
+
+url_regex = re.compile(
+    r'^(?:http|ftp)s?://'  # http:// or https://
+    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+    r'localhost|'  # localhost...
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+    r'(?::\d+)?'  # optional port
+    r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
 
 def is_crypto(class_being_called):
@@ -96,7 +105,6 @@ def is_const_string(line):
 
 
 def extract_const_string(data):
-
     match = re.search('(?P<var>.*),\s+"(?P<value>.*)"', data)
 
     if match:
@@ -115,7 +123,6 @@ def extract_const_string(data):
 
 
 def extract_class(data, file_path):
-
     class_info = data.split(" ")
     c = {
         # Last element is the class name
@@ -155,7 +162,7 @@ def is_method_call(line):
 
 
 def _is_smali_code(code_line):
-    code_line = code_line.lstrip().replace("\n","")
+    code_line = code_line.lstrip().replace("\n", "")
 
     if code_line.startswith(constants.CLASS_ANNOTATION):
         return False
@@ -191,7 +198,6 @@ def is_class_method(line):
 
 
 def extract_class_method(data):
-
     method_info = data.split(" ")
 
     # A method looks like:
@@ -241,15 +247,21 @@ def is_safetynet(class_being_called):
     return None
 
 
+def is_url(string):
+    return re.match(url_regex, string);
+
+
 class CodeParser:
 
     def __init__(self, code_path):
         self.code_path = code_path
         self.classes = []
         self.strings = []
+        self.urls = []
         self.crypto_calls = {}
         self.dynamic_load_calls = {}
         self.safetynet_calls = {}
+
     '''
     Extract class name from a smali source line. Every class name is represented
     as a classdescriptor that starts zith 'L' and ends with ';'.
@@ -276,10 +288,12 @@ class CodeParser:
                         if is_const_string(line):
                             string = extract_const_string(line)['value']
                             self.strings.append(string)
+                            if is_url(string):
+                                self.urls.append(string)
                             if temp_clazz:
                                 temp_clazz["const-strings"].append(string)
 
-                        elif '.method' in line: #class methods
+                        elif '.method' in line:  # class methods
                             if is_class_method(line):
                                 class_method = extract_class_method(line)
 
@@ -294,8 +308,8 @@ class CodeParser:
                     if not continue_loop:
                         continue
 
-        print "Found %s classes" % str(len(self.classes))
-        print "Found %s strings" % str(len(self.strings))
+        print("Found %s classes" % str(len(self.classes)))
+        print("Found %s strings" % str(len(self.strings)))
 
     def process_crypto(self, method_call, temp_clazz):
         if is_crypto(method_call['to_class']):
@@ -303,33 +317,36 @@ class CodeParser:
                 self.crypto_calls[method_call['to_class']].append(temp_clazz)
             else:
                 self.crypto_calls[method_call['to_class']] = [temp_clazz]
-    
+
     def proces_dynamic(self, method_call, temp_clazz):
         if is_dynamic(method_call['to_class']):
             if method_call['to_class'] in self.dynamic_load_calls:
                 self.dynamic_load_calls[method_call['to_class']].append(temp_clazz)
             else:
                 self.dynamic_load_calls[method_call['to_class']] = [temp_clazz]
-    
+
     def proces_safetynet(self, method_call, temp_clazz):
         if is_safetynet(method_call['to_class']):
             if method_call['to_class'] in self.safetynet_calls:
                 self.safetynet_calls[method_call['to_class']].append(temp_clazz)
             else:
                 self.safetynet_calls[method_call['to_class']] = [temp_clazz]
-    
 
     def get_classes(self):
-       return self.classes
+        return self.classes
 
     def get_crypto(self):
         return self.crypto_calls
+
+    def get_urls(self):
+        return self.urls
 
     def get_dynamic(self):
         return self.dynamic_load_calls
 
     def get_safetynet(self):
         return self.safetynet_calls
+
 
 class AndroidManifestParser:
 

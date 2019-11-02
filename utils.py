@@ -1,5 +1,6 @@
 import re
 
+
 class TextStyle:
     PURPLE = '\033[95m'
     BLUE = '\033[94m'
@@ -10,14 +11,18 @@ class TextStyle:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 def print_purple(text):
-    print TextStyle.PURPLE+text+TextStyle.ENDC
+    print(TextStyle.PURPLE + text + TextStyle.ENDC)
+
 
 def print_blue(text):
-    print TextStyle.BLUE + text + TextStyle.ENDC
+    print(TextStyle.BLUE + text + TextStyle.ENDC)
+
 
 def print_red(text):
-    print TextStyle.RED + text + TextStyle.ENDC
+    print(TextStyle.RED + text + TextStyle.ENDC)
+
 
 def is_valid_regex(regex):
     try:

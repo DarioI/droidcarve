@@ -15,30 +15,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pygtk
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
 
-pygtk.require('2.0')
-import gtk
-import pango
 from pygments.lexers import get_lexer_by_name
 from pygments.styles.colorful import ColorfulStyle
 
 STYLE = ColorfulStyle
 
 
-class SourceCodeWindow(gtk.Window):
+class SourceCodeWindow:
 
     def __init__(self, file_path, clazz_name):
-        super(SourceCodeWindow, self).__init__()
-        self.set_title(clazz_name)
-        f = file(file_path)
+        self.win = Gtk.Window()
+        self.win.set_title(clazz_name)
+        f = open(file_path, 'r');
         SOURCE = f.read()
         f.close()
-        win = gtk.ScrolledWindow()
-        self.add(win)
-        self.textview = gtk.TextView()
-        win.add(self.textview)
-        buf = gtk.TextBuffer()
+        self.scrolledwin = Gtk.ScrolledWindow()
+        self.win.add(self.scrolledwin)
+        self.textview = Gtk.TextView()
+        self.scrolledwin.add(self.textview)
+        buf = Gtk.TextBuffer()
 
         styles = {}
         for token, value in get_lexer_by_name("smali", stripall=True).get_tokens(SOURCE):
@@ -55,21 +54,14 @@ class SourceCodeWindow(gtk.Window):
                 tag.set_property('background', '#' + style['bgcolor'])
             if style['color']:
                 tag.set_property('foreground', '#' + style['color'])
-            if style['bold']:
-                tag.set_property('weight', pango.WEIGHT_BOLD)
-            if style['italic']:
-                tag.set_property('style', pango.STYLE_ITALIC)
-            if style['underline']:
-                tag.set_property('underline', pango.UNDERLINE_SINGLE)
 
-        self.connect('delete-event', lambda *a: gtk.main_quit())
+        self.win.connect("destroy", Gtk.main_quit)
 
         self.textview.set_buffer(buf)
         self.textview.set_editable(False)
-        self.textview.modify_font(pango.FontDescription('consolas'))
 
-        self.resize(800, 500)
-        self.show_all()
+        self.win.resize(800, 500)
+        self.win.show_all()
 
     def run(self):
-        gtk.main()
+        Gtk.main()
