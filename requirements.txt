@@ -1,2 +1,5 @@
 axmlparserpy==0.0.4
 pygments
+lief
+paramiko
+adbutils

@@ -1,21 +1,10 @@
 # This file is part of DroidCarve.
 #
-# Copyright (C) 2015, Dario Incalza <dario.incalza at gmail.com>
+# Copyright (C) 2019, Dario Incalza <dario.incalza at gmail.com>
 # All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS-IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
-import os, argparse, re
+import os, argparse, re, json
 import utils
 from cmd import Cmd
 from subprocess import call
@@ -25,6 +14,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters.terminal256 import Terminal256Formatter
 from source_window import SourceCodeWindow
+from utils import _prettyprintdict
 
 __author__ = 'Dario Incalza <dario.incalza@gmail.com>'
 
@@ -32,13 +22,6 @@ BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
 APK_FILE = ""
 CACHE_PATH_SUFFIX = "/cache/"
 UNZIPPED_PATH_SUFFIX = "/unzipped/"
-
-
-def _prettyprintdict(dictionary):
-    for key, value in dictionary.items():
-        utils.print_blue(key + " (%s) " % str(len(value)))
-        for clazz in value:
-            utils.print_purple("\t - %s " % clazz['name'])
 
 
 class DroidCarve(Cmd):
@@ -53,6 +36,7 @@ class DroidCarve(Cmd):
         self.code_parser = CodeParser(cache_path)
         self.from_cache = from_cache
         self.analysis = False
+        self.connected_device = None
         self.excludes = []
 
     def do_quit(self, arg):
@@ -217,7 +201,6 @@ class DroidCarve(Cmd):
             print("Found signature file : " + f)
             call(["keytool", "-printcert", "-file", f])
 
-
     def do_statistics(self, arg):
 
         """
@@ -245,6 +228,86 @@ class DroidCarve(Cmd):
         Print some statistics about the Android application.
         """
         return self.do_statistics(arg)
+
+    def do_about(self, arg):
+
+        """
+        about
+
+        About DroidCarver
+        """
+        utils.print_blue("DroidCarver is a hobby project of Dario Incalza (@h4oxer) <dario.incalza@gmail.com>. A mobile security and hardware security enthousiast.")
+
+    def do_device(self, arg):
+
+        """
+        device
+
+        Check the current connected device.
+
+        device info
+
+        Get information about the currently connected ADB device.
+
+        device connect
+
+        Connect with a device over ADB.
+
+        device disconnect
+
+        Disconnect with the current connected device over ADB.
+        """
+
+        args = arg.split(" ")
+
+        if not arg:
+            if self.connected_device:
+                utils.print_blue(
+                    "Currently connected device with serial number: {}".format(self.connected_device.get_serial()))
+                return
+            else:
+                utils.print_red("No device has been connected to DroidCarver. Use 'device connect' to start "
+                                "connecting a device.")
+                return
+
+        if args[0] == "disconnect":
+            if self.connected_device:
+                utils.print_blue("Disconnecting device {} ...".format(self.connected_device.get_serial()))
+                self.connected_device = None
+                utils.print_blue("Disconnecting done.")
+                return
+            else:
+                utils.print_purple("Nothing to disconnect here.")
+                return
+
+        if args[0] == "info":
+            if self.connected_device:
+                utils.print_blue(json.dumps(self.connected_device.get_info_dict(), indent=2))
+            else:
+                utils.print_red("No device has been connected to DroidCarver. Use 'device connect' to start "
+                                "connecting a device.")
+                return
+
+        if args[0] == "connect":
+            if self.connected_device:
+                utils.print_purple("Already connected to device {}, please first disconnect.".format(
+                    self.connected_device.get_serial()))
+                return
+            else:
+                device_list = [d.serial for d in adb_interface.get_devices()]
+
+                if len(device_list) == 0:
+                    utils.print_purple("No connected devices were found, make sure to check the USB connection and whether ADB is turned on.")
+                    return
+                choice = ask_question("Which device would you like to connect to DroidCarver?", device_list)
+                try:
+                    self.connected_device = adb_interface.ConnectedDevice(serial=choice)
+                    utils.print_blue("Connected to device {}".format(choice))
+                    return
+                except RuntimeError as e:
+                    print(e)
+                    utils.print_red("Could not connect to device {}".format(choice))
+                    return
 
     def do_classes(self, arg):
 
@@ -279,11 +342,11 @@ class DroidCarve(Cmd):
         elif args[0] == "open":
 
             clazz_name = args[1]
-            
+
             for clazz in classes:
-                
+
                 if not clazz_name.endswith(';'):
-                    clazz_name = clazz_name+';'
+                    clazz_name = clazz_name + ';'
 
                 if clazz["name"].rstrip("\n") == clazz_name:
                     print("Opening file: %s " % clazz["file-path"])
@@ -307,7 +370,7 @@ class DroidCarve(Cmd):
             xml_source = self.manifest_parser.get_xml()
             lexer = get_lexer_by_name("xml", stripall=True)
             formatter = Terminal256Formatter()
-            print (highlight(xml_source.rstrip(), lexer, formatter))
+            print(highlight(xml_source.rstrip(), lexer, formatter))
 
         else:
             if option == "p":
@@ -392,13 +455,23 @@ def generate_cache():
 
 def ask_question(question, answers):
     print(question)
+    i = 1
     for a in answers:
-        print("- " + a)
-    choice = input("Choice: ")
-    if choice in answers:
-        return choice
-    else:
+        print("[{}] ".format(i) + a)
+        i += 1
+
+    try:
+        choice = int(input("Choice: "))
+        if 1 <= choice <= len(answers):
+            return answers[choice - 1]
+        else:
+            utils.print_red("Not a valid choice.")
+            ask_question(question, answers)
+    except ValueError:
+        utils.print_red("Not a valid choice.")
         ask_question(question, answers)
+
+
 
 
 '''
@@ -436,5 +509,7 @@ if __name__ == "__main__":
     if not has_baksmali():
         print("No baksmali.jar found in " + BAKSMALI_PATH)
         exit(2)
+    import adb_interface
 
+    adb_interface.get_devices()
     main()

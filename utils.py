@@ -30,3 +30,10 @@ def is_valid_regex(regex):
         return True
     except re.error:
         return False
+
+
+def _prettyprintdict(dictionary):
+    for key, value in dictionary.items():
+        print_blue(key + " ({}) ".format(str(len(value))))
+        for clazz in value:
+            print_purple("\t - {} " .format(clazz['name']))
