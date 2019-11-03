@@ -24,8 +24,10 @@ python droidcarve.py -a yourapplication.apk
 * APK signature extraction
 * AndroidManifest parsing: permissions, services, intents, package information etc
 * Code parsing: strings, cryptography, dynamic code loading, URLs etc.
+* Connect with devices over ADB and integrate with DroidCarve features
 
 ## Roadmap
+* Frida gadget injection for instrumentation without root
 * Java source code navigation
 * Static detection of privacy leaks
 
