@@ -28,7 +28,6 @@ python droidcarve.py -a yourapplication.apk
 
 ## Roadmap
 * Frida gadget injection for instrumentation without root
-* Java source code navigation
 * Static detection of privacy leaks
 
 ## Smali/Baksmali License
