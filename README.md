@@ -10,7 +10,7 @@ optional arguments:
   -a APK, --apk APK  APK file to analyze
 ```
 ## Installation and requirements
-This tool is written for Python 2.7 and requires pip.
+This tool is written for Python 3.5+ and requires pip.
 
 ```shell
 git clone https://github.com/DarioI/droidcarve
