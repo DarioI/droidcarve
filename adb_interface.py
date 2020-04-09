@@ -1,8 +1,13 @@
 # This file is part of DroidCarve.
 #
-# Copyright (C) 2019, Dario Incalza <dario.incalza at gmail.com>
+# Copyright (C) 2020, Dario Incalza <dario.incalza at gmail.com>
 # All rights reserved.
 #
+
+__author__ = "Dario Incalza <dario.incalza@gmail.com"
+__copyright__ = "Copyright 2020, Dario Incalza"
+__maintainer__ = "Dario Incalza"
+__email__ = "dario.incalza@gmail.com"
 
 from adbutils import adb
 
@@ -25,6 +30,9 @@ class ConnectedDevice:
 
     def get_packages(self):
         return self.device.list_packages()
+
+    def download_package(self):
+        pass
 
     def get_serial(self):
         return self.serial

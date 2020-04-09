@@ -1,3 +1,14 @@
+# This file is part of DroidCarve.
+#
+# Copyright (C) 2020, Dario Incalza <dario.incalza at gmail.com>
+# All rights reserved.
+#
+
+__author__ = "Dario Incalza <dario.incalza@gmail.com"
+__copyright__ = "Copyright 2020, Dario Incalza"
+__maintainer__ = "Dario Incalza"
+__email__ = "dario.incalza@gmail.com"
+
 CALLING_OPCODES = [
     'invoke-virtual',
     'invoke-super',

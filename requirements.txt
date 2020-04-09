@@ -1,5 +1,8 @@
-axmlparserpy==0.0.4
+pyaxmlparser
 pygments
 lief
 paramiko
 adbutils
+whichcraft
+apkid
+yara-python==3.11.0

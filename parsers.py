@@ -1,17 +1,21 @@
 # This file is part of DroidCarve.
 #
-# Copyright (C) 2019, Dario Incalza <dario.incalza at gmail.com>
+# Copyright (C) 2020, Dario Incalza <dario.incalza at gmail.com>
 # All rights reserved.
 #
 
-import os, re
+__author__ = "Dario Incalza <dario.incalza@gmail.com"
+__copyright__ = "Copyright 2020, Dario Incalza"
+__maintainer__ = "Dario Incalza"
+__email__ = "dario.incalza@gmail.com"
+
+import os, re, io, utils, zipfile
 import constants
 
 from xml.dom import minidom
-from axmlparserpy.axmlprinter import AXMLPrinter
+from pyaxmlparser import APK
+from pyaxmlparser.axmlprinter import AXMLPrinter
 import xml.dom.minidom
-
-__author__ = 'Dario Incalza <dario.incalza@gmail.com>'
 
 url_regex = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://
@@ -265,7 +269,7 @@ class CodeParser:
         for subdir, dirs, files in os.walk(self.code_path):
             for file in files:
                 full_path = os.path.join(subdir, file)
-                with open(full_path, 'r') as f:
+                with io.open(full_path, 'r', encoding="utf-8") as f:
                     continue_loop = True
                     line_number = 1
                     temp_clazz = {}
@@ -337,36 +341,48 @@ class CodeParser:
         return self.safetynet_calls
 
 
-class AndroidManifestParser:
+class APKParser:
 
-    def __init__(self, manifest_xml_file):
-
+    def __init__(self, manifest_xml_file, apk_file):
         if manifest_xml_file is None:
             raise TypeError
 
         self.manifest = manifest_xml_file
+        self.apk_file = apk_file
+        self.apk = APK(apk_file)
         self.permissions = []
+        self.info = {}
+        self.xml = None
 
     def start(self):
-        ap = AXMLPrinter(open(self.manifest, 'rb').read())
-        buff = minidom.parseString(ap.getBuff()).toxml()
-        xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
-        pretty_xml_as_string = xml_code.toprettyxml()
-        for line in pretty_xml_as_string.split("\n"):
-            if not line.find("<uses-permission") == -1:
-                self.permissions.append(line.split("\"")[1])
+        self.info["Package"] = self.apk.package
+        self.info["App Name"] = self.apk.get_app_name()
+        self.info["Version name"] = self.apk.version_name
+
+        print(self.info)
 
     def get_xml(self):
-        ap = AXMLPrinter(open(self.manifest, 'rb').read())
-        buff = minidom.parseString(ap.getBuff()).toxml()
-        xml_code = xml.dom.minidom.parseString(buff.rstrip())  # or xml.dom.minidom.parseString(xml_string)
-        return xml_code.toprettyxml()
+        raw = bytearray(utils.read_file(self.manifest))
+        ap = AXMLPrinter(raw)
+        return ap.get_xml(pretty=True)
 
     def get_permissions(self):
-        return self.permissions
+        return self.apk.get_permissions()
+
+    def get_services(self):
+        return self.apk.get_services()
+
+    def get_activities(self):
+        return self.apk.get_activities()
+
+    def get_features(self):
+        return self.apk.get_features()
+
+    def get_libraries(self):
+        return self.apk.get_libraries()
 
 
-class FileParser():
+class FileParser:
 
     def __init__(self, files_path):
         self.files_path = files_path
