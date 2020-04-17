@@ -43,15 +43,15 @@ class ConnectedDevice:
     def get_info_dict(self):
 
         return {
-            "Serial": self.device.serial,
-            "Name": self.get_prop("ro.product.name"),
-            "Manufacturer": self.get_prop("ro.product.manufacturer"),
-            "Model": self.get_prop("ro.product.model"),
-            "Android Version": self.get_prop("ro.build.version.release"),
-            "API Level": self.get_prop("ro.build.version.sdk"),
-            "CPU Architecture": self.get_prop("ro.arch"),
-            "CPU ABI": self.get_prop("ro.product.cpu.abi"),
-            "Crypto State": self.get_prop("ro.crypto.state"),
-            "FDE Algorithm": self.get_prop("ro.crypto.fde_algorithm"),
-            "Latest Security Patch": self.get_prop("ro.build.version.security_patch")
+            "serial": self.device.serial,
+            "name": self.get_prop("ro.product.name"),
+            "manufacturer": self.get_prop("ro.product.manufacturer"),
+            "model": self.get_prop("ro.product.model"),
+            "android_version": self.get_prop("ro.build.version.release"),
+            "api_level": self.get_prop("ro.build.version.sdk"),
+            "cpu_arch": self.get_prop("ro.arch"),
+            "cpu_abi": self.get_prop("ro.product.cpu.abi"),
+            "crypto_state": self.get_prop("ro.crypto.state"),
+            "fde_algorithm": self.get_prop("ro.crypto.fde_algorithm"),
+            "latest_security_patch": self.get_prop("ro.build.version.security_patch")
         }

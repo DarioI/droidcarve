@@ -43,6 +43,9 @@ def device(action=None):
             return jsonify(droidcarve.get_device_list()), 200
 
         if action == "connect":
+
+            if not request.json['serial']:
+                return jsonify({'error': 'DEVICE_SERIAL_MISSING'}), 400
             serial = request.json['serial']
             device_info = droidcarve.connect_device(serial)
 
