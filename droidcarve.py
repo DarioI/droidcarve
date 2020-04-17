@@ -16,7 +16,86 @@ from cmd import Cmd
 from analyzer import AndroidAnalyzer
 import adb_interface
 
-BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
+
+class DroidCarveServer:
+    def __init__(self):
+        self.connected_device = None
+        self.apk_analyzer = None
+
+    def get_status(self):
+        return {
+            "device": self.connected_device.get_info_dict() if self.connected_device else None,
+            "application": self.apk_analyzer.get_app_id() if self.apk_analyzer else None,
+        }
+
+    def get_application(self):
+
+        if not self.apk_analyzer:
+            return {
+                "application": None
+            }
+
+        return self.apk_analyzer.get_app_id()
+
+    def get_device(self):
+        if not self.connected_device:
+            return {
+                'device': None
+            }
+
+        return {
+            'device': self.connected_device.get_info_dict()
+        }
+
+    def get_device_list(self):
+
+        device_list = [{'serial': d.serial, 'name': d.shell(["getprop", "ro.product.model"])} for d in
+                       adb_interface.get_devices()]
+
+        if len(device_list) == 0:
+            return {
+                'devices': None
+            }
+        else:
+            return {
+                'devices': device_list
+            }
+
+    def connect_device(self, serial):
+
+        if not serial:
+            return None
+
+        else:
+            self.connected_device = adb_interface.ConnectedDevice(serial=serial)
+            return self.connected_device.get_info_dict()
+
+    def set_application(self, filepath):
+        print("Checking {}".format(filepath))
+        if os.path.exists(filepath):
+            self.apk_analyzer = AndroidAnalyzer(apk_file=filepath)
+            self.apk_analyzer.pre_analyze()
+        else:
+            raise AttributeError("Non valid APK supplied.")
+
+    def get_statistics(self):
+
+        if not self.apk_analyzer:
+            raise AttributeError("No application has been selected.")
+
+        return self.apk_analyzer.get_stats(shouldPrint=False)
+
+    def get_source_tree(self):
+        if not self.apk_analyzer:
+            raise AttributeError("No application has been selected.")
+
+        return self.apk_analyzer.get_source_tree()
+
+    def get_source_file_path(self, key):
+        if not self.apk_analyzer:
+            raise AttributeError("No application has been selected.")
+
+        return self.apk_analyzer.get_source_file(key)
 
 
 class DroidCarve(Cmd):
@@ -140,7 +219,7 @@ class DroidCarve(Cmd):
             utils.print_red("[!!!] Currently no APK has been set for analysis.")
             return
 
-        self.androidAnalyzer.print_statistics()
+        self.androidAnalyzer.get_stats()
 
     def do_about(self, arg):
 
@@ -230,6 +309,7 @@ class DroidCarve(Cmd):
                 self.connected_device.get_serial()))
             return
         else:
+
             device_list = [d.serial for d in adb_interface.get_devices()]
 
             if len(device_list) == 0:
@@ -352,15 +432,6 @@ def check_apk_file():
         exit(3)
 
 
-'''
-Check if there is a baksmali tool.
-'''
-
-
-def has_baksmali():
-    return os.path.isfile(BAKSMALI_PATH)
-
-
 def main():
     set_logging()
     apk_file = parse_arguments()
@@ -376,8 +447,8 @@ def set_logging():
 if __name__ == "__main__":
 
     utils.print_welcome()
-    if not has_baksmali():
-        print("No baksmali.jar found in " + BAKSMALI_PATH)
+    if not utils.has_baksmali():
+        utils.print_red("[!!!] - no baksmali binary found - exiting.")
         exit(2)
 
     if not utils.adb_available():

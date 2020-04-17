@@ -9,13 +9,15 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-import os, re, io, utils, zipfile
-import constants
+import io
+import os
+import re
+import utils
 
-from xml.dom import minidom
 from pyaxmlparser import APK
 from pyaxmlparser.axmlprinter import AXMLPrinter
-import xml.dom.minidom
+
+import constants
 
 url_regex = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://
@@ -63,7 +65,7 @@ def extract_method_call(data):
 
     method = {
         # Destination class
-        'to_class': c_dst_class,
+        'to_class': c_dst_class + ';',
 
         # Destination method
         'to_method': c_dst_method,
@@ -115,7 +117,7 @@ def extract_const_string(data):
         return None
 
 
-def extract_class(data, file_path):
+def extract_class(data, file_path, file_key):
     class_info = data.split(" ")
     c = {
         # Last element is the class name
@@ -140,7 +142,9 @@ def extract_class(data, file_path):
         'const-strings': [],
 
         # Methods
-        'methods': []
+        'methods': [],
+
+        'key': file_key
     }
 
     return c
@@ -251,9 +255,10 @@ class CodeParser:
         self.classes = []
         self.strings = []
         self.urls = []
-        self.crypto_calls = {}
-        self.dynamic_load_calls = {}
-        self.safetynet_calls = {}
+        self.crypto_calls = None
+        self.dynamic_load_calls = None
+        self.safetynet_calls = None
+        self.file_hash_table = {}
 
     '''
     Extract class name from a smali source line. Every class name is represented
@@ -270,12 +275,14 @@ class CodeParser:
             for file in files:
                 full_path = os.path.join(subdir, file)
                 with io.open(full_path, 'r', encoding="utf-8") as f:
+                    file_key = utils.get_path_hash(full_path)
+                    self.file_hash_table[file_key] = full_path
                     continue_loop = True
                     line_number = 1
                     temp_clazz = {}
                     for line in f:
                         if is_class(line):
-                            temp_clazz = extract_class(line, full_path)
+                            temp_clazz = extract_class(line, full_path, file_key)
                             self.classes.append(temp_clazz)
 
                         if is_const_string(line):
@@ -304,7 +311,17 @@ class CodeParser:
         print("Found %s classes" % str(len(self.classes)))
         print("Found %s strings" % str(len(self.strings)))
 
+    def get_file_for_hash(self, key):
+        try:
+            return self.file_hash_table[key]
+        except KeyError:
+            return None
+
     def process_crypto(self, method_call, temp_clazz):
+
+        if not self.crypto_calls:
+            self.crypto_calls = {}
+
         if is_crypto(method_call['to_class']):
             if method_call['to_class'] in self.crypto_calls:
                 self.crypto_calls[method_call['to_class']].append(temp_clazz)
@@ -312,6 +329,10 @@ class CodeParser:
                 self.crypto_calls[method_call['to_class']] = [temp_clazz]
 
     def proces_dynamic(self, method_call, temp_clazz):
+
+        if not self.dynamic_load_calls:
+            self.dynamic_load_calls = {}
+
         if is_dynamic(method_call['to_class']):
             if method_call['to_class'] in self.dynamic_load_calls:
                 self.dynamic_load_calls[method_call['to_class']].append(temp_clazz)
@@ -319,6 +340,9 @@ class CodeParser:
                 self.dynamic_load_calls[method_call['to_class']] = [temp_clazz]
 
     def proces_safetynet(self, method_call, temp_clazz):
+        if not self.safetynet_calls:
+            self.safetynet_calls = {}
+
         if is_safetynet(method_call['to_class']):
             if method_call['to_class'] in self.safetynet_calls:
                 self.safetynet_calls[method_call['to_class']].append(temp_clazz)
@@ -355,10 +379,14 @@ class APKParser:
         self.xml = None
 
     def start(self):
-        self.info["Package"] = self.apk.package
-        self.info["App Name"] = self.apk.get_app_name()
-        self.info["Version name"] = self.apk.version_name
-
+        self.info["package"] = self.apk.package
+        self.info["name"] = self.apk.get_app_name()
+        self.info["version_name"] = self.apk.version_name
+        self.info["version_code"] = self.apk.version_code
+        self.info["valid_apk"] = self.apk.valid_apk
+        self.info["min_sdk_version"] = self.apk.get_min_sdk_version()
+        self.info["max_sdk_version"] = self.apk.get_max_sdk_version()
+        self.info["target_sdk_version"] = self.apk.get_target_sdk_version()
         print(self.info)
 
     def get_xml(self):

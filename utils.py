@@ -9,7 +9,9 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-import re, whichcraft, os
+import re, whichcraft, os, random, string, hashlib
+
+BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
 
 
 class TextStyle:
@@ -104,3 +106,33 @@ def adb_available():
     if path is None:
         return False
     return True
+
+
+'''
+Check if there is a baksmali tool.
+'''
+
+
+def has_baksmali():
+    return os.path.isfile(BAKSMALI_PATH)
+
+
+def path_to_dict(path):
+    d = {'key': get_path_hash(path), 'title': os.path.basename(path), 'name': os.path.basename(path)}
+    if os.path.isdir(path):
+        d['type'] = "directory"
+        d['children'] = [path_to_dict(os.path.join(path, x)) for x in os.listdir(path)]
+    else:
+        d['type'] = "file"
+        d['isLeaf'] = True
+    return d
+
+
+def randomString(stringLength=10):
+    """Generate a random string of fixed length """
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(stringLength))
+
+
+def get_path_hash(path):
+    return hashlib.sha224(path.encode('utf-8')).hexdigest()

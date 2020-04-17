@@ -25,7 +25,7 @@ UNZIPPED_PATH_SUFFIX = "/unzipped/"
 class AndroidAnalyzer:
 
     def __init__(self, apk_file):
-        (self.cache_path, self.unzip_path, self.from_cache) = self.generate_cache(apk_file=apk_file)
+        (self.cache_path, self.unzip_path, self.from_cache, self.app_id) = self.generate_cache(apk_file=apk_file)
         self.apk_file = str(apk_file)
         self.file_parser = FileParser(self.unzip_path)
         self.code_parser = CodeParser(self.cache_path)
@@ -33,18 +33,13 @@ class AndroidAnalyzer:
         self.excludes = []
 
     def generate_cache(self, apk_file):
-        hash = hashlib.sha1(open(apk_file, 'rb').read()).hexdigest()
+        hash = hashlib.sha1(open(apk_file, 'rb').read()).hexdigest()[0:10]
         print("Hash of APK file = " + hash)
         CACHE_PATH = os.getcwd() + "/" + hash + CACHE_PATH_SUFFIX
         UNZIPPED_PATH = os.getcwd() + "/" + hash + UNZIPPED_PATH_SUFFIX
 
         if os.path.exists(CACHE_PATH) or os.path.exists(UNZIPPED_PATH):
-            choice = utils.ask_question("A cached version of the application has been found, start from a fresh cache?",
-                                  ["Yes", "No"])
-            if choice == "No":
-                return CACHE_PATH, UNZIPPED_PATH, True
-            else:
-                return CACHE_PATH, UNZIPPED_PATH, False
+            return CACHE_PATH, UNZIPPED_PATH, True, hash
 
         if not os.path.exists(CACHE_PATH):
             os.makedirs(CACHE_PATH)
@@ -52,7 +47,13 @@ class AndroidAnalyzer:
         if not os.path.exists(UNZIPPED_PATH):
             os.makedirs(UNZIPPED_PATH)
 
-        return CACHE_PATH, UNZIPPED_PATH, False
+        return CACHE_PATH, UNZIPPED_PATH, False, hash
+
+    def get_app_id(self):
+
+        info = self.apk_parser.info
+        info["application"] = self.app_id
+        return info
 
     def unzip_apk(self, destination=None):
         if destination is None or destination == "":
@@ -61,6 +62,12 @@ class AndroidAnalyzer:
         else:
             print("Unzipping APK to %s ... " % destination)
             call(["unzip", self.apk_file, "-d", destination])
+
+    def get_source_tree(self):
+        return utils.path_to_dict(self.cache_path)
+
+    def get_source_file(self, key):
+        return self.code_parser.get_file_for_hash(key)
 
     def pre_analyze(self):
         """
@@ -81,8 +88,8 @@ class AndroidAnalyzer:
         self.file_parser.start()
 
         print("Analyzing AndroidManifest.xml ...")
-        self.manifest_parser = APKParser(self.file_parser.get_xml("/AndroidManifest.xml"), self.apk_file)
-        self.manifest_parser.start()
+        self.apk_parser = APKParser(self.file_parser.get_xml("/AndroidManifest.xml"), self.apk_file)
+        self.apk_parser.start()
         self.analysis = True
         print("Analyzing ... Done")
 
@@ -102,38 +109,48 @@ class AndroidAnalyzer:
             return
 
         elif option == "m":
-            xml_source = self.manifest_parser.get_xml()
+            xml_source = self.apk_parser.get_xml()
             lexer = get_lexer_by_name("xml", stripall=True)
             formatter = Terminal256Formatter()
             print(highlight(xml_source.rstrip(), lexer, formatter))
 
         elif option == "p":
-            for perm in self.manifest_parser.get_permissions():
+            for perm in self.apk_parser.get_permissions():
                 if not perm.startswith("android."):
                     utils.print_purple("\t" + perm)
                 else:
                     print("\t" + perm)
         elif option == "a":
-            for activity in self.manifest_parser.get_activities():
+            for activity in self.apk_parser.get_activities():
                 print("\t"+activity)
         elif option == "s":
-            for service in self.manifest_parser.get_services():
+            for service in self.apk_parser.get_services():
                 print("\t"+service)
         elif option == "f":
-            for feature in self.manifest_parser.get_features():
+            for feature in self.apk_parser.get_features():
                 print("\t"+feature)
 
-    def print_statistics(self):
+    def get_stats(self, shouldPrint=True):
         if not self.analysis:
             print("Please analyze the APK before running this command.")
             return
 
-        print('Disassembled classes     = %i' % len(self.code_parser.get_classes()))
-        print('Permissions              = %i' % len(self.manifest_parser.get_permissions()))
-        print('Crypto Operations        = %i' % len(self.code_parser.get_crypto()))
-        print('Dynamic Code Loading     = %i' % len(self.code_parser.get_dynamic()))
-        print('SafetyNet Calls          = %i' % len(self.code_parser.get_safetynet()))
-        print('Hardcoded URLS           = %i' % len(self.code_parser.get_urls()))
+        if shouldPrint:
+            print('Disassembled classes     = %i' % len(self.code_parser.get_classes()))
+            print('Permissions              = %i' % len(self.apk_parser.get_permissions()))
+            print('Crypto Operations        = %i' % len(self.code_parser.get_crypto()))
+            print('Dynamic Code Loading     = %i' % len(self.code_parser.get_dynamic()))
+            print('SafetyNet Calls          = %i' % len(self.code_parser.get_safetynet()))
+            print('Hardcoded URLS           = %i' % len(self.code_parser.get_urls()))
+
+        return {
+            'classes': self.code_parser.get_classes(),
+            'permissions': self.apk_parser.get_permissions(),
+            'crypto': self.code_parser.get_crypto(),
+            'dynamic': self.code_parser.get_dynamic(),
+            'safetynet': self.code_parser.get_safetynet(),
+            'urls': self.code_parser.get_urls(),
+        }
 
     def find_safetyNet(self):
 
@@ -153,15 +170,10 @@ class AndroidAnalyzer:
 
     def print_signature(self):
 
-        if not self.analysis:
-            print("Please analyze the APK before running this command.")
-            return
-
         files = self.file_parser.get_signature_files()
 
         if len(files) == 0:
-            print("No signature files found, see 'help signature'.")
-            return
+            return None
 
         for f in files:
             print("Found signature file : " + f)
