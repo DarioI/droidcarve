@@ -1,13 +1,8 @@
-# droidcarve
+# droidcarve [![Build Status](https://travis-ci.com/DarioI/droidcarve.svg?branch=master)](https://travis-ci.com/DarioI/droidcarve)
 
 ```
 DroidCarve is capable of analyzing an Android APK file and automate certain
-reverse engineering tasks. For a full list of features, please see the help
-function.
-
-optional arguments:
-  -h, --help         show this help message and exit
-  -a APK, --apk APK  APK file to analyze
+reverse engineering tasks. This repository contains the server component.
 ```
 ## Installation and requirements
 This tool is written for Python 3.5+ and requires pip.
@@ -16,7 +11,6 @@ This tool is written for Python 3.5+ and requires pip.
 git clone https://github.com/DarioI/droidcarve
 cd droidcarve
 pip install -r requirements.txt
-python droidcarve.py -a yourapplication.apk  
 ```
 
 ## Features
