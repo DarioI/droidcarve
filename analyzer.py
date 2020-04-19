@@ -9,13 +9,15 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-from parsers import FileParser, CodeParser, APKParser, ManifestParser
-import hashlib, os, utils, re, logging
+import hashlib
+import logging
+import os
+import utils
 from subprocess import call
-from pygments import highlight
-from pygments.lexers import get_lexer_by_name
-from pygments.formatters.terminal256 import Terminal256Formatter
+
 from apkid.apkid import Scanner, Options
+
+from parsers import FileParser, CodeParser, APKParser, ManifestParser
 
 BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
 APK_FILE = ""
@@ -35,7 +37,7 @@ class AndroidAnalyzer:
 
     def generate_cache(self, apk_file):
         hash = hashlib.sha1(open(apk_file, 'rb').read()).hexdigest()[0:10]
-        print("Hash of APK file = " + hash)
+        logging.info("[*] Hash of APK file = " + hash)
         CACHE_PATH = os.getcwd() + "/" + hash + CACHE_PATH_SUFFIX
         UNZIPPED_PATH = os.getcwd() + "/" + hash + UNZIPPED_PATH_SUFFIX
 
@@ -58,10 +60,10 @@ class AndroidAnalyzer:
 
     def unzip_apk(self, destination=None):
         if destination is None or destination == "":
-            print("Unzipping APK ...")
+            logging.info("[*] Unzipping APK ...")
             call(["unzip", self.apk_file, "-d", self.unzip_path])
         else:
-            print("Unzipping APK to %s ... " % destination)
+            logging.info("[*] Unzipping APK to %s ... " % destination)
             call(["unzip", self.apk_file, "-d", destination])
 
     def get_source_tree(self):
@@ -101,52 +103,10 @@ class AndroidAnalyzer:
     def get_manifest_parsed(self):
         return self.manifest_parser.get_manifest()
 
-    def print_manifest_info(self, option):
-
+    def get_stats(self):
         if not self.analysis:
             print("Please analyze the APK before running this command.")
             return
-
-        xml_file = self.file_parser.get_xml("/AndroidManifest_unobfuscated.xml")
-
-        if xml_file is None:
-            print("AndroidManifest_unobfuscated.xml was not found.")
-            return
-
-        elif option == "m":
-            xml_source = self.apk_parser.get_xml()
-            lexer = get_lexer_by_name("xml", stripall=True)
-            formatter = Terminal256Formatter()
-            print(highlight(xml_source.rstrip(), lexer, formatter))
-
-        elif option == "p":
-            for perm in self.apk_parser.get_permissions():
-                if not perm.startswith("android."):
-                    utils.print_purple("\t" + perm)
-                else:
-                    print("\t" + perm)
-        elif option == "a":
-            for activity in self.apk_parser.get_activities():
-                print("\t" + activity)
-        elif option == "s":
-            for service in self.apk_parser.get_services():
-                print("\t" + service)
-        elif option == "f":
-            for feature in self.apk_parser.get_features():
-                print("\t" + feature)
-
-    def get_stats(self, shouldPrint=True):
-        if not self.analysis:
-            print("Please analyze the APK before running this command.")
-            return
-
-        if shouldPrint:
-            print('Disassembled classes     = %i' % len(self.code_parser.get_classes()))
-            print('Permissions              = %i' % len(self.apk_parser.get_permissions()))
-            print('Crypto Operations        = %i' % len(self.code_parser.get_crypto()))
-            print('Dynamic Code Loading     = %i' % len(self.code_parser.get_dynamic()))
-            print('SafetyNet Calls          = %i' % len(self.code_parser.get_safetynet()))
-            print('Hardcoded URLS           = %i' % len(self.code_parser.get_urls()))
 
         return {
             'classes': self.code_parser.get_classes(),
@@ -163,15 +123,7 @@ class AndroidAnalyzer:
             print("Please analyze the APK before running this command.")
             return
 
-        safetynet_clazz = self.code_parser.get_safetynet()
-
-        if len(safetynet_clazz) == 0:
-            utils.print_blue("No SafetyNet calls found. Maybe they are obfuscated using reflection calls "
-                             "or the app simply does not use the SafetyNet API.")
-            return
-
-        else:
-            utils.prettyprintdict(safetynet_clazz)
+        return self.code_parser.get_safetynet()
 
     def print_signature(self):
 
@@ -190,14 +142,7 @@ class AndroidAnalyzer:
             print("Please analyze the APK before running this command.")
             return
 
-        urls = self.code_parser.get_urls()
-
-        if len(urls) == 0:
-            utils.print_blue("Nu URLs were found.")
-            return
-
-        else:
-            print(urls)
+        return self.code_parser.get_urls()
 
     def find_crypto_usage(self):
 
@@ -205,15 +150,8 @@ class AndroidAnalyzer:
             print("Please analyze the APK before running this command.")
             return
 
-        crypto_classes = self.code_parser.get_crypto()
+        return self.code_parser.get_crypto()
 
-        if len(crypto_classes) == 0:
-            utils.print_blue("No cryptographic calls found. Maybe they are obfuscated using reflection calls, "
-                             "an unkown third party has been used or the app simply does not use any crypto.")
-            return
-
-        else:
-            utils.prettyprintdict(crypto_classes)
 
     def find_dynamic_loading(self):
 
@@ -221,66 +159,11 @@ class AndroidAnalyzer:
             print("Please analyze the APK before running this command.")
             return
 
-        dynamic_classes = self.code_parser.get_dynamic()
+        return self.code_parser.get_dynamic()
 
-        if len(dynamic_classes) == 0:
-            utils.print_blue("No dynamic code loading calls found. Maybe they are obfuscated using reflection calls "
-                             "or the app simply does not use any dynamic code loading.")
-            return
-
-        else:
-            utils.prettyprintdict(dynamic_classes)
-
-    def is_excluded(self, candidate):
-        for regex in self.excludes:
-            pattern = re.compile(regex)
-            if pattern.match(candidate):
-                return True
-
-        return False
-
-    def print_classes(self, option):
-
-        if not self.analysis:
-            print("Please analyze the APK before running this command.")
-            return
-
-        args = option.split(" ")
-        classes = self.code_parser.get_classes()
-
-        if not option:
-            utils.print_blue("Found %s classes" % str(len(classes)))
-
-        if args[0] == "find":
-            if len(args) == 1:
-                utils.print_red("Please specify a regex to match a class name.")
-            else:
-                regex = args[1]
-                if utils.is_valid_regex(regex):
-                    pattern = re.compile(regex)
-                    for clazz in classes:
-                        if pattern.match(clazz["name"]) and not self.is_excluded(clazz["name"]):
-                            print(clazz["name"])
-                else:
-                    utils.print_red("Invalid regex.")
-
-        elif args[0] == "open":
-
-            clazz_name = args[1]
-
-            for clazz in classes:
-
-                if not clazz_name.endswith(';'):
-                    clazz_name = clazz_name + ';'
-
-                if clazz["name"].rstrip("\n") == clazz_name:
-                    # print("Opening file: %s " % clazz["file-path"])
-                    # scWin = SourceCodeWindow(clazz["file-path"], clazz["name"])
-                    # scWin.run()
-                    pass
 
     def disassemble_apk(self):
-        print("Disassembling APK ...")
+        logging.info("[*] Disassembling APK ...")
         call(["java", "-jar", BAKSMALI_PATH, "d", self.apk_file, "-o", self.cache_path])
 
     def analyze_obfuscation(self):
@@ -291,19 +174,3 @@ class AndroidAnalyzer:
         rules = options.rules_manager.load()
         scanner = Scanner(rules, options)
         scanner.scan(self.apk_file)
-
-    def exclude_regex(self, arg):
-        if not arg:
-            print("Exclusion list:")
-            print(self.excludes)
-            return
-
-        args = arg.split(" ")
-
-        if args[0] == "clear":
-            self.excludes = []
-            utils.print_blue("Exclusion list cleared.")
-        elif utils.is_valid_regex(args[0]):
-            self.excludes.append(args[0])
-        else:
-            utils.print_red("No valid exclusion regex provided.")

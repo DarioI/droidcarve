@@ -42,7 +42,7 @@ class AnalysisController:
         if not self.apk_analyzer:
             raise AttributeError("No application has been selected.")
 
-        return self.apk_analyzer.get_stats(shouldPrint=False)
+        return self.apk_analyzer.get_stats()
 
     def get_source_tree(self):
         if not self.apk_analyzer:
