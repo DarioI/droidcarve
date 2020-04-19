@@ -88,9 +88,11 @@ def application(action=None):
         else:
             return "", 404
 
-    except AttributeError:
+    except AttributeError as e:
+        print(e)
         return jsonify({'error': 'APPLICATION_NOT_SET'}), 400
-    except TypeError:
+    except TypeError as e:
+        logging.error(e)
         return jsonify({'error': 'NON_VALID_APK'}), 400
 
 
@@ -141,7 +143,7 @@ def main():
 
 def set_logging():
     import logging
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.INFO)
 
 
 if __name__ == "__main__":

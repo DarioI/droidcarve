@@ -9,10 +9,7 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-import io
-import os
-import re
-import utils
+import io, os, re, utils, logging
 
 from pyaxmlparser import APK
 from pyaxmlparser.axmlprinter import AXMLPrinter
@@ -470,7 +467,8 @@ class ManifestParser:
             "receivers": [],
             "meta_data": []
         }
-        root = ET.fromstring(xml)
+        root = ET.fromstring(xml.decode('utf-8'))
+        self._is_namespaced = self._has_android_ns(root)
         self._parse_element(root)
 
     def get_manifest(self):
@@ -479,65 +477,99 @@ class ManifestParser:
     def get_manifest_xml(self):
         return self.xml
 
+    def is_obfuscated(self):
+        return self._is_namespaced
+
+    def _get_android_NS(self, attrib):
+        if self._is_namespaced:
+            return attrib
+
+        return "{%s}" % ("http://schemas.android.com/apk/res/android") + attrib
+
+    def _has_android_ns(self, element):
+        for child in element:
+            ns_name = "{%s}" % ("http://schemas.android.com/apk/res/android") + 'name'
+            if ns_name in child.attrib.keys():
+                return False
+            if 'name' in child.attrib.keys():
+                return True
+
     def _parse_element(self, element):
-        self._parse_activity(element)
-        self._parse_permission(element)
-        self._parse_service(element)
-        self._parse_feature(element)
-        self._parse_provider(element)
-        self._parse_receiver(element)
-        self._parse_meta_data(element)
+        try:
+            self._parse_activity(element)
+            self._parse_permission(element)
+            self._parse_service(element)
+            self._parse_feature(element)
+            self._parse_provider(element)
+            self._parse_receiver(element)
+            self._parse_meta_data(element)
+        except TypeError as e:
+            logging.error(e)
 
         for child in element:
             self._parse_element(child)
 
     def _parse_activity(self, element):
         if element.tag == "activity":
+            ns_name = self._get_android_NS('name')
             self.manifest["activities"].append(
                 {
-                    'name': element.attrib['name'],
-                    'intent': self._filter_intent(element, 'activity', element.attrib['name'])
+                    'name': element.attrib[ns_name],
+                    'intent': self._filter_intent(element, 'activity', element.attrib[ns_name])
                 }
             )
 
     def _parse_permission(self, element):
-        if element.tag == "uses-permission" or element.tag == "permission":
-            self.manifest["permissions"].append(element.attrib['name'])
+        ns_name = self._get_android_NS('name')
+        if (element.tag == "uses-permission" or element.tag == "permission") and ns_name in element.attrib.keys():
+            self.manifest["permissions"].append(element.attrib[ns_name])
 
     def _parse_service(self, element):
+        ns_name = self._get_android_NS('name')
+        ns_exported = self._get_android_NS('exported')
+
         if element.tag == "service":
             self.manifest["services"].append(
                 {
-                    'name': element.attrib['name'],
-                    'exported': element.attrib['exported'],
-                    'intent': self._filter_intent(element, 'service', element.attrib['name'])
+                    'name': element.attrib[ns_name],
+                    'exported': element.attrib[ns_exported] if ns_exported in element.attrib.keys() else None,
+                    'intent': self._filter_intent(element, 'service', element.attrib[ns_name])
                 }
             )
 
     def _parse_feature(self, element):
-        if element.tag == "uses-feature":
-            self.manifest["features"].append(element.attrib['name'])
+        ns_name = self._get_android_NS('name')
+        if element.tag == "uses-feature" and ns_name in element.attrib.keys():
+            self.manifest["features"].append(element.attrib[ns_name])
 
     def _parse_provider(self, element):
+        ns_name = self._get_android_NS('name')
+        ns_exported = self._get_android_NS('exported')
+        ns_authorities = self._get_android_NS('authorities')
+
         if element.tag == "provider":
             self.manifest["providers"].append({
-                'name': element.attrib['name'],
-                'exported': element.attrib['exported'],
-                'authorities': element.attrib['authorities'],
+                'name': element.attrib[ns_name],
+                'exported': element.attrib[ns_exported] if ns_exported in element.attrib.keys() else False,
+                'authorities': element.attrib[ns_authorities],
             })
 
     def _parse_receiver(self, element):
-        if element.tag == "receiver":
 
-            item = {'name': element.attrib['name'],
-                    'intent': self._filter_intent(element, 'receiver', element.attrib['name'])}
+        if element.tag == "receiver":
+            ns_name = self._get_android_NS('name')
+            ns_exported = self._get_android_NS('exported')
+            ns_permission = self._get_android_NS('permission')
+
+            item = {'name': element.attrib[ns_name],
+                    'intent': self._filter_intent(element, 'receiver', element.attrib[ns_name])}
 
             if 'permission' in element.attrib.keys():
-                item['permission'] = element.attrib['permission']
+                item['permission'] = element.attrib[ns_permission]
 
-            if 'exported' in element.attrib.keys():
+            if ns_exported in element.attrib.keys():
 
-                if element.attrib['exported'] == 'true':
+                if element.attrib[ns_exported] == 'true':
                     item['exported'] = True
                 else:
                     item['exported'] = False
@@ -545,28 +577,29 @@ class ManifestParser:
             self.manifest['receivers'].append(item)
 
     def _parse_meta_data(self, element):
-        if element.tag == "meta-data":
-
-            item = {'name': element.attrib['name']}
+        ns_name = self._get_android_NS('name')
+        if element.tag == "meta-data" and ns_name in element.attrib.keys():
+            item = {'name': element.attrib[ns_name]}
             for key in element.attrib.keys():
                 item[key] = element.attrib[key]
             self.manifest['meta_data'].append(item)
 
-    def _filter_intent(self, element, type, name):
+    def _filter_intent(self, element, tagType, name):
         result = {
-            'name': None,
-            'category': None
+            'action': [],
+            'category': []
         }
-        if element.tag == type and element.attrib['name'] == name:
+        ns_name = self._get_android_NS('name')
+        if element.tag == tagType and element.attrib[ns_name] == name:
             for child in element:
                 if child.tag == 'intent-filter':
                     intent_filter = child
                     for item in intent_filter:
                         if item.tag == "action":
-                            _, value = item.attrib.popitem()
-                            result['name'] = value
+                            _, temp_action = item.attrib.popitem()
+                            result['action'].append(temp_action)
                         if item.tag == "category":
-                            _, value = item.attrib.popitem()
-                            result['category'] = value
+                            _, temp_category = item.attrib.popitem()
+                            result['category'].append(temp_category)
 
-        return None if (not result["name"] and not result["category"]) else result
+        return None if len(result['category']) == 0 and len(result['action']) == 0 else result

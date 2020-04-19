@@ -89,8 +89,8 @@ class AndroidAnalyzer:
         self.file_parser.start()
 
         logging.info("[*] Analyzing APK ...")
-        self.apk_parser = APKParser(self.file_parser.get_xml("/AndroidManifest.xml"), self.apk_file)
-        logging.info("[*] Analyzing AndroidManifest.xml ...")
+        self.apk_parser = APKParser(self.file_parser.get_xml("AndroidManifest.xml"), self.apk_file)
+        logging.info("[*] Analyzing AndroidManifest_unobfuscated.xml ...")
         self.manifest_parser = ManifestParser(self.apk_parser.get_xml())
         logging.info("[*] Analyzing ... Done")
         self.analysis = True
@@ -107,10 +107,10 @@ class AndroidAnalyzer:
             print("Please analyze the APK before running this command.")
             return
 
-        xml_file = self.file_parser.get_xml("/AndroidManifest.xml")
+        xml_file = self.file_parser.get_xml("/AndroidManifest_unobfuscated.xml")
 
         if xml_file is None:
-            print("AndroidManifest.xml was not found.")
+            print("AndroidManifest_unobfuscated.xml was not found.")
             return
 
         elif option == "m":

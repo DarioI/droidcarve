@@ -1,0 +1,206 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="27008" android:versionName="5.708" android:installLocation="0" android:compileSdkVersion="29" android:compileSdkVersionCodename="10" package="com.fsck.k9" platformBuildVersionCode="29" platformBuildVersionName="10">
+  <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28"/>
+  <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
+  <supports-screens android:anyDensity="true" android:smallScreens="true" android:normalScreens="true" android:largeScreens="true"/>
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.READ_CONTACTS"/>
+  <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.VIBRATE"/>
+  <uses-permission android:name="android.permission.WAKE_LOCK"/>
+  <permission android:label="@7F1203E0" android:name="com.fsck.k9.permission.READ_MESSAGES" android:protectionLevel="0x00000001" android:permissionGroup="android.permission-group.MESSAGES" android:description="@7F1203DF"/>
+  <uses-permission android:name="com.fsck.k9.permission.READ_MESSAGES"/>
+  <permission android:label="@7F1201EE" android:name="com.fsck.k9.permission.DELETE_MESSAGES" android:protectionLevel="0x00000001" android:permissionGroup="android.permission-group.MESSAGES" android:description="@7F1201ED"/>
+  <uses-permission android:name="com.fsck.k9.permission.DELETE_MESSAGES"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+  <application android:theme="@7F130216" android:label="@7F120174" android:icon="@7F0800ED" android:name="com.fsck.k9.App" android:allowTaskReparenting="false" android:allowBackup="false" android:usesCleartextTraffic="true" android:resizeableActivity="true" android:appComponentFactory="androidx.core.app.CoreComponentFactory">
+    <meta-data android:name="android.app.default_searchable" android:value="com.fsck.k9.activity.Search"/>
+    <meta-data android:name="com.lge.support.SPLIT_WINDOW" android:value="true"/>
+    <uses-library android:name="com.sec.android.app.multiwindow" android:required="false"/>
+    <meta-data android:name="com.sec.android.support.multiwindow" android:value="true"/>
+    <meta-data android:name="com.samsung.android.sdk.multiwindow.penwindow.enable" android:value="true"/>
+    <meta-data android:name="android.webkit.WebView.MetricsOptOut" android:value="true"/>
+    <activity android:label="@7F1204AB" android:name="com.fsck.k9.ui.onboarding.OnboardingActivity"/>
+    <activity android:theme="@7F130210" android:name="com.fsck.k9.ui.settings.account.OpenPgpAppSelectDialog" android:configChanges="0x00000004"/>
+    <activity android:label="@7F1200F1" android:name="com.fsck.k9.activity.setup.AccountSetupBasics" android:configChanges="0x00000004"/>
+    <activity android:label="@7F1200E5" android:name="com.fsck.k9.activity.setup.AccountSetupAccountType" android:configChanges="0x00000004"/>
+    <activity android:label="@7F12011B" android:name="com.fsck.k9.activity.setup.AccountSetupIncoming" android:configChanges="0x00000004"/>
+    <activity android:label="@7F120049" android:name="com.fsck.k9.activity.setup.AccountSetupComposition" android:configChanges="0x00000004"/>
+    <activity android:label="@7F12014A" android:name="com.fsck.k9.activity.setup.AccountSetupOutgoing" android:configChanges="0x00000004"/>
+    <activity android:label="@7F120142" android:name="com.fsck.k9.activity.setup.AccountSetupOptions" android:configChanges="0x00000004"/>
+    <activity android:label="@7F120126" android:name="com.fsck.k9.activity.setup.AccountSetupNames" android:configChanges="0x00000004"/>
+    <activity android:label="@7F12018F" android:name="com.fsck.k9.activity.ChooseAccount" android:configChanges="0x00000004" android:noHistory="true"/>
+    <activity android:label="@7F120190" android:name="com.fsck.k9.ui.choosefolder.ChooseFolderActivity" android:configChanges="0x00000004" android:noHistory="true"/>
+    <activity android:label="@7F120191" android:name="com.fsck.k9.activity.ChooseIdentity" android:configChanges="0x00000004"/>
+    <activity android:label="@7F120320" android:name="com.fsck.k9.activity.ManageIdentities" android:configChanges="0x00000004"/>
+    <activity android:label="@7F120217" android:name="com.fsck.k9.activity.EditIdentity" android:configChanges="0x00000004"/>
+    <activity android:theme="@7F130210" android:name="com.fsck.k9.activity.NotificationDeleteConfirmation" android:taskAffinity="" android:excludeFromRecents="true" android:launchMode="1"/>
+    <activity android:label="@7F1200F8" android:name="com.fsck.k9.activity.setup.AccountSetupCheckSettings" android:configChanges="0x000000A4"/>
+    <activity android:label="@7F120029" android:name="com.fsck.k9.ui.endtoend.AutocryptKeyTransferActivity" android:configChanges="0x00000004"/>
+    <activity android:name="com.fsck.k9.activity.MessageList">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+        <category android:name="android.intent.category.APP_EMAIL"/>
+        <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER"/>
+        <category android:name="android.intent.category.PENWINDOW_LAUNCHER"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:scheme="email" android:host="messages"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+    </activity>
+    <activity-alias android:name="com.fsck.k9.activity.FolderList" android:exported="true" android:targetActivity="com.fsck.k9.activity.MessageList"/>
+    <activity-alias android:name="com.fsck.k9.activity.Accounts" android:exported="true" android:targetActivity="com.fsck.k9.activity.MessageList"/>
+    <activity android:label="@7F120174" android:name="com.fsck.k9.activity.MessageCompose" android:enabled="false" android:configChanges="0x00000004">
+      <intent-filter>
+        <action android:name="android.intent.action.SENDTO"/>
+        <data android:scheme="mailto"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.SEND"/>
+        <data android:mimeType="*/*"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.SEND_MULTIPLE"/>
+        <data android:mimeType="*/*"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:scheme="mailto"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="android.intent.category.BROWSABLE"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="org.autocrypt.PEER_ACTION"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+      <meta-data android:name="android.service.chooser.chooser_target_service" android:value="com.fsck.k9.directshare.K9ChooserTargetService"/>
+    </activity>
+    <activity android:label="@7F1203F9" android:name="com.fsck.k9.activity.Search" android:configChanges="0x00000004" android:uiOptions="0x00000001">
+      <intent-filter>
+        <action android:name="android.intent.action.SEARCH"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+      <meta-data android:name="android.app.searchable" android:resource="@7F160009"/>
+    </activity>
+    <activity android:label="@7F12043C" android:name="com.fsck.k9.activity.LauncherShortcuts" android:configChanges="0x00000004">
+      <intent-filter>
+        <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+    </activity>
+    <activity android:name="com.fsck.k9.widget.unread.UnreadWidgetConfigurationActivity">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+      </intent-filter>
+    </activity>
+    <activity android:label="@7F120490" android:name="com.fsck.k9.activity.UpgradeDatabases"/>
+    <activity android:label="@7F120253" android:name="com.fsck.k9.ui.managefolders.ManageFoldersActivity"/>
+    <activity android:label="@7F1203D3" android:name="com.fsck.k9.ui.settings.SettingsActivity"/>
+    <activity android:label="@7F12027D" android:name="com.fsck.k9.ui.settings.general.GeneralSettingsActivity"/>
+    <activity android:label="@7F1200D5" android:name="com.fsck.k9.ui.settings.account.AccountSettingsActivity"/>
+    <receiver android:name="com.fsck.k9.service.BootReceiver" android:enabled="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="android.net.conn.BACKGROUND_DATA_SETTING_CHANGED"/>
+      </intent-filter>
+      <intent-filter>
+        <action android:name="com.android.sync.SYNC_CONN_STATUS_CHANGED"/>
+      </intent-filter>
+    </receiver>
+    <receiver android:name="com.fsck.k9.service.CoreReceiver" android:exported="false"/>
+    <receiver android:name="com.fsck.k9.service.StorageReceiver" android:enabled="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MEDIA_MOUNTED"/>
+        <data android:scheme="file"/>
+      </intent-filter>
+    </receiver>
+    <receiver android:label="@7F12048A" android:icon="@7F0800ED" android:name="com.fsck.k9.provider.UnreadWidgetProvider">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@7F160010"/>
+    </receiver>
+    <receiver android:label="@7F120319" android:icon="@7F08013A" android:name="com.fsck.k9.widget.list.MessageListWidgetProvider">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@7F160007"/>
+    </receiver>
+    <service android:name="com.fsck.k9.widget.list.MessageListWidgetService" android:permission="android.permission.BIND_REMOTEVIEWS" android:enabled="true"/>
+    <service android:name="com.fsck.k9.notification.NotificationActionService" android:enabled="true"/>
+    <service android:name="com.fsck.k9.service.PushService" android:enabled="true"/>
+    <service android:name="com.fsck.k9.service.SleepService" android:enabled="true"/>
+    <service android:name="com.fsck.k9.service.DatabaseUpgradeService" android:exported="false"/>
+    <service android:name="com.fsck.k9.directshare.K9ChooserTargetService" android:permission="android.permission.BIND_CHOOSER_TARGET_SERVICE">
+      <intent-filter>
+        <action android:name="android.service.chooser.ChooserTargetService"/>
+      </intent-filter>
+    </service>
+    <service android:name="com.fsck.k9.account.AccountRemoverService" android:permission="android.permission.BIND_JOB_SERVICE"/>
+    <provider android:name="com.fsck.k9.provider.AttachmentProvider" android:exported="false" android:authorities="com.fsck.k9.attachmentprovider" android:grantUriPermissions="true">
+      <meta-data android:name="de.cketti.safecontentresolver.ALLOW_INTERNAL_ACCESS" android:value="true"/>
+    </provider>
+    <provider android:name="com.fsck.k9.provider.RawMessageProvider" android:exported="false" android:authorities="com.fsck.k9.rawmessageprovider">
+      <meta-data android:name="de.cketti.safecontentresolver.ALLOW_INTERNAL_ACCESS" android:value="true"/>
+    </provider>
+    <provider android:name="com.fsck.k9.external.MessageProvider" android:readPermission="com.fsck.k9.permission.READ_MESSAGES" android:writePermission="com.fsck.k9.permission.DELETE_MESSAGES" android:exported="true" android:multiprocess="true" android:authorities="com.fsck.k9.messageprovider" android:grantUriPermissions="true"/>
+    <provider android:name="com.fsck.k9.provider.EmailProvider" android:exported="false" android:authorities="com.fsck.k9.provider.email"/>
+    <provider android:name="com.fsck.k9.provider.DecryptedFileProvider" android:exported="false" android:authorities="com.fsck.k9.decryptedfileprovider" android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@7F160003"/>
+    </provider>
+    <provider android:name="com.fsck.k9.provider.AttachmentTempFileProvider" android:exported="false" android:authorities="com.fsck.k9.tempfileprovider" android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@7F16000E"/>
+    </provider>
+    <provider android:name="com.mikepenz.iconics.IconicsContentProvider" android:enabled="@7F050007" android:exported="false" android:authorities="com.fsck.k9.iconics.core.provider" android:initOrder="100"/>
+    <service android:name="androidx.work.impl.background.systemalarm.SystemAlarmService" android:enabled="@7F050004" android:exported="false" android:directBootAware="false"/>
+    <service android:name="androidx.work.impl.background.systemjob.SystemJobService" android:permission="android.permission.BIND_JOB_SERVICE" android:enabled="@7F050006" android:exported="true" android:directBootAware="false"/>
+    <service android:name="androidx.work.impl.foreground.SystemForegroundService" android:enabled="@7F050005" android:exported="false" android:directBootAware="false"/>
+    <receiver android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver" android:enabled="true" android:exported="false" android:directBootAware="false"/>
+    <receiver android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryChargingProxy" android:enabled="false" android:exported="false" android:directBootAware="false">
+      <intent-filter>
+        <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
+        <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
+      </intent-filter>
+    </receiver>
+    <receiver android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$BatteryNotLowProxy" android:enabled="false" android:exported="false" android:directBootAware="false">
+      <intent-filter>
+        <action android:name="android.intent.action.BATTERY_OKAY"/>
+        <action android:name="android.intent.action.BATTERY_LOW"/>
+      </intent-filter>
+    </receiver>
+    <receiver android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$StorageNotLowProxy" android:enabled="false" android:exported="false" android:directBootAware="false">
+      <intent-filter>
+        <action android:name="android.intent.action.DEVICE_STORAGE_LOW"/>
+        <action android:name="android.intent.action.DEVICE_STORAGE_OK"/>
+      </intent-filter>
+    </receiver>
+    <receiver android:name="androidx.work.impl.background.systemalarm.ConstraintProxy$NetworkStateProxy" android:enabled="false" android:exported="false" android:directBootAware="false">
+      <intent-filter>
+        <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+      </intent-filter>
+    </receiver>
+    <receiver android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver" android:enabled="false" android:exported="false" android:directBootAware="false">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        <action android:name="android.intent.action.TIME_SET"/>
+        <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+      </intent-filter>
+    </receiver>
+    <receiver android:name="androidx.work.impl.background.systemalarm.ConstraintProxyUpdateReceiver" android:enabled="@7F050004" android:exported="false" android:directBootAware="false">
+      <intent-filter>
+        <action android:name="androidx.work.impl.background.systemalarm.UpdateProxies"/>
+      </intent-filter>
+    </receiver>
+    <service android:name="androidx.room.MultiInstanceInvalidationService" android:exported="false"/>
+  </application>
+</manifest>

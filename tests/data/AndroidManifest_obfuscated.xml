@@ -1,0 +1,64 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1904004" versionName="19.04.4" hardwareAccelerated="true" package="com.droidcarve.example">
+  <uses-sdk minSdkVersion="21" targetSdkVersion="26"/>
+  <supports-screens anyDensity="true" smallScreens="true" normalScreens="true" largeScreens="true" resizeable="true" xlargeScreens="true"/>
+  <uses-permission name="android.permission.INTERNET"/>
+  <uses-permission name="android.permission.ACCESS_NETWORK_STATE"/>
+  <uses-permission name="android.permission.ACCESS_WIFI_STATE"/>
+  <uses-feature name="android.hardware.screen.portrait"/>
+  <uses-permission name="android.permission.CAMERA" required="false"/>
+  <uses-feature name="android.hardware.camera" required="false"/>
+  <uses-feature name="android.hardware.camera.front" required="false"/>
+  <uses-permission name="android.permission.WAKE_LOCK"/>
+  <uses-permission name="android.permission.VIBRATE"/>
+  <uses-permission name="com.google.android.c2dm.permission.RECEIVE"/>
+  <uses-permission name="com.droidcarve.example.permission.C2D_MESSAGE"/>
+  <uses-permission name="com.droidcarve.example.permission.PushHandlerActivity"/>
+  <permission name="com.droidcarve.example.permission.C2D_MESSAGE" protectionLevel="0x00000002"/>
+  <permission name="com.droidcarve.example.permission.PushHandlerActivity" protectionLevel="0x00000002"/>
+  <uses-feature name="android.hardware.camera.autofocus" required="false"/>
+  <uses-feature name="android.hardware.camera.flash" required="false"/>
+  <uses-feature name="android.hardware.screen.landscape" required="false"/>
+  <uses-feature name="android.hardware.wifi" required="false"/>
+  <application label="@7F0E0021" android:icon="@7F0C0000" debuggable="false" allowBackup="false" hardwareAccelerated="true" supportsRtl="true">
+    <activity theme="@android:01030129" label="@7F0E0020" name=".MainActivity" launchMode="1" configChanges="0x000004B4" windowSoftInputMode="0x00000010">
+      <intent-filter label="@7F0E00B2">
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+    <activity name="o.า" screenOrientation="1" configChanges="0x00000080"/>
+    <activity name="o.ᓒ" screenOrientation="1" configChanges="0x00000080"/>
+    <activity name="o.ᒃ" screenOrientation="1" configChanges="0x00000080"/>
+    <activity name="o.ܪ" windowSoftInputMode="0x00000014"/>
+    <activity name="o.ᒌ"/>
+    <activity name="o.ঢ"/>
+    <provider name="o.ٻ" exported="false" authorities="com.droidcarve.example.sharing.provider" grantUriPermissions="true">
+      <meta-data name="android.support.FILE_PROVIDER_PATHS" resource="@7F110001"/>
+    </provider>
+    <activity name="com.adobe.phonegap.push.PushHandlerActivity" permission="com.droidcarve.example.permission.PushHandlerActivity" exported="true"/>
+    <receiver name="o.ɹ"/>
+    <receiver name="com.google.android.gms.gcm.GcmReceiver" permission="com.google.android.c2dm.permission.SEND" exported="true">
+      <intent-filter>
+        <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
+        <category android:name="com.droidcarve.example"/>
+      </intent-filter>
+    </receiver>
+    <service name="com.adobe.phonegap.push.GCMIntentService" exported="false">
+      <intent-filter>
+        <action android:name="com.google.android.c2dm.intent.RECEIVE"/>
+      </intent-filter>
+    </service>
+    <service name="o.ן" exported="false">
+      <intent-filter>
+        <action android:name="com.google.android.gms.iid.InstanceID"/>
+      </intent-filter>
+    </service>
+    <service name="o.ר" exported="false"/>
+    <activity name="o.ব"/>
+    <activity name="o.र"/>
+    <activity theme="@7F0F014B" name="o.ｴ" clearTaskOnLaunch="true" stateNotNeeded="true" screenOrientation="6" windowSoftInputMode="0x00000003"/>
+    <activity theme="@android:01030010" name="o.ᒄ" exported="false"/>
+    <meta-data name="com.google.android.gms.version" value="@7F090004"/>
+    <meta-data name="android.arch.lifecycle.VERSION" value="27.0.0-SNAPSHOT"/>
+  </application>
+</manifest>
