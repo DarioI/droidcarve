@@ -40,7 +40,7 @@ def is_method_call(line):
         return False
 
 
-def extract_method_call(data):
+def extract_method_call(data, line_number=-1):
     # Default values
     c_dst_class = data
     c_dst_method = None
@@ -75,7 +75,9 @@ def extract_method_call(data):
         'dst_args': c_dst_args,
 
         # Return value
-        'return': c_ret
+        'return': c_ret,
+
+        'line_number': line_number
     }
 
     return method
@@ -298,16 +300,18 @@ class CodeParser:
 
                         elif 'invoke' in line:
                             if is_method_call(line):
-                                method_call = extract_method_call(line)
-                                self.process_crypto(method_call, temp_clazz)
+                                method_call = extract_method_call(line, line_number)
+                                self.process_crypto(method_call, temp_clazz, line_number)
                                 self.proces_dynamic(method_call, temp_clazz)
                                 self.proces_safetynet(method_call, temp_clazz)
+
+                        line_number += 1
 
                     if not continue_loop:
                         continue
 
-        print("Found %s classes" % str(len(self.classes)))
-        print("Found %s strings" % str(len(self.strings)))
+        logging.info("Found %s classes" % str(len(self.classes)))
+        logging.info("Found %s strings" % str(len(self.strings)))
 
     def get_file_for_hash(self, key):
         try:
@@ -315,12 +319,12 @@ class CodeParser:
         except KeyError:
             return None
 
-    def process_crypto(self, method_call, temp_clazz):
+    def process_crypto(self, method_call, temp_clazz, line_number=-1):
 
         if not self.crypto_calls:
             self.crypto_calls = {}
-
         if is_crypto(method_call['to_class']):
+            temp_clazz['line_number'] = line_number
             if method_call['to_class'] in self.crypto_calls:
                 self.crypto_calls[method_call['to_class']].append(temp_clazz)
             else:
