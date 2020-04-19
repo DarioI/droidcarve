@@ -16,6 +16,7 @@ import utils
 
 from pyaxmlparser import APK
 from pyaxmlparser.axmlprinter import AXMLPrinter
+import xml.etree.ElementTree as ET
 
 import constants
 
@@ -376,9 +377,9 @@ class APKParser:
         self.apk = APK(apk_file)
         self.permissions = []
         self.info = {}
-        self.xml = None
+        self._parse_apk()
 
-    def start(self):
+    def _parse_apk(self):
         self.info["package"] = self.apk.package
         self.info["name"] = self.apk.get_app_name()
         self.info["version_name"] = self.apk.version_name
@@ -387,7 +388,6 @@ class APKParser:
         self.info["min_sdk_version"] = self.apk.get_min_sdk_version()
         self.info["max_sdk_version"] = self.apk.get_max_sdk_version()
         self.info["target_sdk_version"] = self.apk.get_target_sdk_version()
-        print(self.info)
 
     def get_xml(self):
         raw = bytearray(utils.read_file(self.manifest))
@@ -398,10 +398,29 @@ class APKParser:
         return self.apk.get_permissions()
 
     def get_services(self):
+
+        services = []
+
+        for svc in self.apk.get_services():
+            print(svc)
+            services.append({
+                'name': svc,
+                'intent': self.apk.get_intent_filters("service", svc)
+            })
+
         return self.apk.get_services()
 
     def get_activities(self):
-        return self.apk.get_activities()
+        activities = []
+
+        for act in self.apk.get_activities():
+            print(act)
+            activities.append({
+                'name': act,
+                'intent': self.apk.get_intent_filters("activity", act)
+            })
+
+        return activities
 
     def get_features(self):
         return self.apk.get_features()
@@ -436,3 +455,118 @@ class FileParser:
         for xml_file in self.xml_files:
             if xml_file.endswith(name):
                 return xml_file
+
+
+class ManifestParser:
+
+    def __init__(self, xml):
+        self.xml = xml
+        self.manifest = {
+            "activities": [],
+            "permissions": [],
+            "services": [],
+            "features": [],
+            "providers": [],
+            "receivers": [],
+            "meta_data": []
+        }
+        root = ET.fromstring(xml)
+        self._parse_element(root)
+
+    def get_manifest(self):
+        return self.manifest
+
+    def get_manifest_xml(self):
+        return self.xml
+
+    def _parse_element(self, element):
+        self._parse_activity(element)
+        self._parse_permission(element)
+        self._parse_service(element)
+        self._parse_feature(element)
+        self._parse_provider(element)
+        self._parse_receiver(element)
+        self._parse_meta_data(element)
+
+        for child in element:
+            self._parse_element(child)
+
+    def _parse_activity(self, element):
+        if element.tag == "activity":
+            self.manifest["activities"].append(
+                {
+                    'name': element.attrib['name'],
+                    'intent': self._filter_intent(element, 'activity', element.attrib['name'])
+                }
+            )
+
+    def _parse_permission(self, element):
+        if element.tag == "uses-permission" or element.tag == "permission":
+            self.manifest["permissions"].append(element.attrib['name'])
+
+    def _parse_service(self, element):
+        if element.tag == "service":
+            self.manifest["services"].append(
+                {
+                    'name': element.attrib['name'],
+                    'exported': element.attrib['exported'],
+                    'intent': self._filter_intent(element, 'service', element.attrib['name'])
+                }
+            )
+
+    def _parse_feature(self, element):
+        if element.tag == "uses-feature":
+            self.manifest["features"].append(element.attrib['name'])
+
+    def _parse_provider(self, element):
+        if element.tag == "provider":
+            self.manifest["providers"].append({
+                'name': element.attrib['name'],
+                'exported': element.attrib['exported'],
+                'authorities': element.attrib['authorities'],
+            })
+
+    def _parse_receiver(self, element):
+        if element.tag == "receiver":
+
+            item = {'name': element.attrib['name'],
+                    'intent': self._filter_intent(element, 'receiver', element.attrib['name'])}
+
+            if 'permission' in element.attrib.keys():
+                item['permission'] = element.attrib['permission']
+
+            if 'exported' in element.attrib.keys():
+
+                if element.attrib['exported'] == 'true':
+                    item['exported'] = True
+                else:
+                    item['exported'] = False
+
+            self.manifest['receivers'].append(item)
+
+    def _parse_meta_data(self, element):
+        if element.tag == "meta-data":
+
+            item = {'name': element.attrib['name']}
+            for key in element.attrib.keys():
+                item[key] = element.attrib[key]
+            self.manifest['meta_data'].append(item)
+
+    def _filter_intent(self, element, type, name):
+        result = {
+            'name': None,
+            'category': None
+        }
+        if element.tag == type and element.attrib['name'] == name:
+            for child in element:
+                if child.tag == 'intent-filter':
+                    intent_filter = child
+                    for item in intent_filter:
+                        if item.tag == "action":
+                            _, value = item.attrib.popitem()
+                            result['name'] = value
+                        if item.tag == "category":
+                            _, value = item.attrib.popitem()
+                            result['category'] = value
+
+        return None if (not result["name"] and not result["category"]) else result

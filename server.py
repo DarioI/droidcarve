@@ -11,16 +11,16 @@ __email__ = "dario.incalza@gmail.com"
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 
-import utils, os, tempfile
-from droidcarve import DroidCarveServer
+import utils, os, tempfile, logging
+from droidcarve import AnalysisController, DeviceController
 from werkzeug.utils import secure_filename
 
 UPLOAD_DIR = tempfile.mkdtemp()
-
 app = Flask("DroidCarve API")
 CORS(app)
 
-droidcarve = DroidCarveServer()
+analysisController = AnalysisController()
+deviceController = DeviceController()
 
 
 @app.route('/', methods=['GET'])
@@ -30,7 +30,10 @@ def index():
 
 @app.route('/status', methods=['GET'])
 def status():
-    return jsonify(droidcarve.get_status())
+    return {
+        "device": deviceController.get_device()['device'],
+        "application": analysisController.get_application()['application']
+    }
 
 
 @app.route('/device/', methods=['GET'])  # get info
@@ -38,16 +41,16 @@ def status():
 def device(action=None):
     try:
         if not action:
-            return jsonify(droidcarve.get_device()), 200
+            return jsonify(deviceController.get_device()), 200
         if action == "list":
-            return jsonify(droidcarve.get_device_list()), 200
+            return jsonify(deviceController.get_device_list()), 200
 
         if action == "connect":
 
             if not request.json['serial']:
                 return jsonify({'error': 'DEVICE_SERIAL_MISSING'}), 400
             serial = request.json['serial']
-            device_info = droidcarve.connect_device(serial)
+            device_info = deviceController.connect_device(serial)
 
             if not device_info:
                 return jsonify({'error': 'DEVICE_CONNECTION_ERROR'}), 400
@@ -56,8 +59,7 @@ def device(action=None):
         else:
             return "", 404
 
-    except AttributeError as e:
-        print(e)
+    except AttributeError:
         return jsonify({'error': 'GENERAL_ERROR'}), 400
 
 
@@ -69,7 +71,7 @@ def application(action=None):
 
     try:
         if not action:
-            return jsonify(droidcarve.get_application())
+            return jsonify(analysisController.get_application())
 
         elif action == "upload":
             file = request.files['file']
@@ -77,30 +79,28 @@ def application(action=None):
                 filename = secure_filename(file.filename)
                 file_path = os.path.join(UPLOAD_DIR, filename)
                 file.save(file_path)
-                droidcarve.set_application(file_path)
+                analysisController.set_application(file_path)
                 return "", 200
 
         elif action == "stats":
-            return jsonify(droidcarve.get_statistics()), 200
+            return jsonify(analysisController.get_statistics()), 200
 
         else:
             return "", 404
 
-    except AttributeError as e:
-        print(e)
+    except AttributeError:
         return jsonify({'error': 'APPLICATION_NOT_SET'}), 400
-    except TypeError as e:
-        print(e)
+    except TypeError:
         return jsonify({'error': 'NON_VALID_APK'}), 400
 
 
 @app.route('/source/<action>', methods=['GET', 'POST', 'OPTIONS'])
-def source(action=None, key=None):
+def source(action=None):
     if request.method == 'OPTIONS':
         return "", 200
 
     if action == "tree":
-        return droidcarve.get_source_tree(), 200
+        return analysisController.get_source_tree(), 200
 
 
 @app.route('/file/<action>/<key>', methods=['GET', 'POST', 'OPTIONS'])
@@ -109,13 +109,24 @@ def file(action=None, key=None):
         if not key:
             return jsonify({'error': "NO_FILE_KEY"}), 400
         try:
-            filepath = droidcarve.get_source_file_path(key)
+            filepath = analysisController.get_source_file_path(key)
             return send_file(filepath, as_attachment=True)
         except FileNotFoundError:
             return jsonify({'error': "FILE_NOT_FOUND"}), 404
-        except AttributeError as e:
-            print(e)
+        except AttributeError:
             return jsonify({'error': 'APPLICATION_NOT_SET'}), 400
+
+
+@app.route('/manifest/<action>', methods=['GET'])
+def manifest(action):
+    if action == "view":
+        manifest_xml = analysisController.get_manifest_source()
+        return jsonify({'xml': manifest_xml.decode("utf-8")}), 200
+
+    if action == "overview":
+        return jsonify(analysisController.get_manifest_overview()), 200
+
+    return jsonify({}), 404
 
 
 @app.route('/login')
@@ -136,10 +147,10 @@ def set_logging():
 if __name__ == "__main__":
 
     if not utils.has_baksmali():
-        utils.print_red("[!!!] - no baksmali binary found - exiting.")
+        logging.error("[!!!] - no baksmali binary found - exiting.")
         exit(2)
 
     if not utils.adb_available():
-        utils.print_red("[!!!] ADB not found. Features that need a connected Android device won't work. Please "
+        logging.error("[!!!] ADB not found. Features that need a connected Android device won't work. Please "
                         "install ADB before using DroidCarve.")
     main()

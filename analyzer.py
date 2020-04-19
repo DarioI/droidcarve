@@ -9,13 +9,14 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-from parsers import FileParser, CodeParser, APKParser
-import hashlib, os, utils, re
+from parsers import FileParser, CodeParser, APKParser, ManifestParser
+import hashlib, os, utils, re, logging
 from subprocess import call
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters.terminal256 import Terminal256Formatter
 from apkid.apkid import Scanner, Options
+
 BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
 APK_FILE = ""
 CACHE_PATH_SUFFIX = "/cache/"
@@ -80,21 +81,25 @@ class AndroidAnalyzer:
             self.unzip_apk()
             self.disassemble_apk()
         else:
-            print("Start analysis from cache ...")
+            logging.info("[*] Start analysis from cache ...")
 
-        print("Analyzing disassembled code ...")
+        logging.info("[*] Analyzing disassembled code ...")
         self.code_parser.start()
-        print("Analyzing unzipped files ...")
+        logging.info("[*] Analyzing unzipped files ...")
         self.file_parser.start()
 
-        print("Analyzing AndroidManifest.xml ...")
+        logging.info("[*] Analyzing APK ...")
         self.apk_parser = APKParser(self.file_parser.get_xml("/AndroidManifest.xml"), self.apk_file)
-        self.apk_parser.start()
+        logging.info("[*] Analyzing AndroidManifest.xml ...")
+        self.manifest_parser = ManifestParser(self.apk_parser.get_xml())
+        logging.info("[*] Analyzing ... Done")
         self.analysis = True
-        print("Analyzing ... Done")
 
-    def print_apk_info(self):
-        pass
+    def get_manifest_source(self):
+        return self.manifest_parser.get_manifest_xml()
+
+    def get_manifest_parsed(self):
+        return self.manifest_parser.get_manifest()
 
     def print_manifest_info(self, option):
 
@@ -122,13 +127,13 @@ class AndroidAnalyzer:
                     print("\t" + perm)
         elif option == "a":
             for activity in self.apk_parser.get_activities():
-                print("\t"+activity)
+                print("\t" + activity)
         elif option == "s":
             for service in self.apk_parser.get_services():
-                print("\t"+service)
+                print("\t" + service)
         elif option == "f":
             for feature in self.apk_parser.get_features():
-                print("\t"+feature)
+                print("\t" + feature)
 
     def get_stats(self, shouldPrint=True):
         if not self.analysis:
@@ -280,8 +285,8 @@ class AndroidAnalyzer:
 
     def analyze_obfuscation(self):
         options = Options(
-                        json=True
-                    )
+            json=True
+        )
 
         rules = options.rules_manager.load()
         scanner = Scanner(rules, options)
