@@ -1,4 +1,4 @@
-# droidcarve [![Build Status](https://travis-ci.com/DarioI/droidcarve.svg?branch=master)](https://travis-ci.com/DarioI/droidcarve)
+# DroidCarve [![Build Status](https://travis-ci.com/DarioI/droidcarve.svg?branch=master)](https://travis-ci.com/DarioI/droidcarve)
 
 ```
 DroidCarve is capable of analyzing an Android APK file and automate certain
