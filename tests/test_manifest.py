@@ -5,7 +5,7 @@ from parsers import ManifestParser
 class TestManifestParser(unittest.TestCase):
 
     def test_unobfuscated_manifest(self):
-        manifest_file = open('data/AndroidManifest_unobfuscated.xml', 'rb')
+        manifest_file = open('./data/AndroidManifest_unobfuscated.xml', 'rb')
         xml_bytes = manifest_file.read()
         manifest_file.close()
         self.parser = ManifestParser(xml_bytes)
@@ -18,7 +18,7 @@ class TestManifestParser(unittest.TestCase):
         self.assertEqual(len(self.parser.get_manifest()['receivers']), 12, 'Should contain 12 receivers.')
 
     def test_unobfuscated_manifest_2(self):
-        manifest_file = open('data/AndroidManifest_unobfuscated_2.xml', 'rb')
+        manifest_file = open('./data/AndroidManifest_unobfuscated_2.xml', 'rb')
         xml_bytes = manifest_file.read()
         manifest_file.close()
         self.parser = ManifestParser(xml_bytes)
@@ -31,7 +31,7 @@ class TestManifestParser(unittest.TestCase):
         self.assertEqual(len(self.parser.get_manifest()['receivers']), 78, 'Should contain 78 receivers.')
 
     def test_obfuscated_manifest(self):
-        manifest_file = open('data/AndroidManifest_obfuscated.xml', 'rb')
+        manifest_file = open('./data/AndroidManifest_obfuscated.xml', 'rb')
         xml_bytes = manifest_file.read()
         manifest_file.close()
         self.parser = ManifestParser(xml_bytes)
