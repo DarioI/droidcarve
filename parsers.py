@@ -604,6 +604,7 @@ class ManifestParser:
                             result['action'].append(temp_action)
                         if item.tag == "category":
                             _, temp_category = item.attrib.popitem()
-                            result['category'].append(temp_category)
+                            if temp_category not in result['category']:
+                                result['category'].append(temp_category)
 
         return None if len(result['category']) == 0 and len(result['action']) == 0 else result
