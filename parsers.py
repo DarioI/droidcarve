@@ -601,6 +601,8 @@ class ManifestParser:
                     for item in intent_filter:
                         if item.tag == "action":
                             _, temp_action = item.attrib.popitem()
+                            if temp_action not in result['action']:
+                                result['action'].append(temp_action)
                             result['action'].append(temp_action)
                         if item.tag == "category":
                             _, temp_category = item.attrib.popitem()
