@@ -1,5 +1,4 @@
 pyaxmlparser
-pygments
 lief
 paramiko
 adbutils
