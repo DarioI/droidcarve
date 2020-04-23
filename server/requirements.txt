@@ -4,7 +4,6 @@ lief
 paramiko
 adbutils
 whichcraft
-yara-python==3.11.0
 flask-cors
 werkzeug
 flask
