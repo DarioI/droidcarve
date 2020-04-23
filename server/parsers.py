@@ -9,12 +9,12 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-import io, os, re, utils, logging
-
+import io, os, re, logging
+from server import utils
 from pyaxmlparser import APK
 from pyaxmlparser.axmlprinter import AXMLPrinter
 import xml.etree.ElementTree as ET
-from constants import smali
+from server.constants import smali
 
 url_regex = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://

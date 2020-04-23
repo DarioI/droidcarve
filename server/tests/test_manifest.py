@@ -1,5 +1,5 @@
 import unittest, os
-from parsers import ManifestParser
+from server.parsers import ManifestParser
 
 
 class TestManifestParser(unittest.TestCase):
