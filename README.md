@@ -1,19 +1,18 @@
 # DroidCarve [![Build Status](https://travis-ci.com/DarioI/droidcarve.svg?branch=master)](https://travis-ci.com/DarioI/droidcarve)
 
-```
 DroidCarve is capable of analyzing an Android APK file and automate certain
-reverse engineering tasks. This repository contains the server component.
-```
-## Installation and requirements
-This tool is written for Python 3.5+ and requires pip.
+reverse engineering tasks. This repository contains the server and client component.
 
-```shell
-git clone https://github.com/DarioI/droidcarve
-cd droidcarve
-pip install -r requirements.txt
-```
+## The Frontend
+The frontend is a React application, which you can find in the `client/` subfolder.
 
-## Features
+## The Backend
+The backend is a Python `flask` application, which you can find in the `server/` subfolder.
+
+# Installation
+Installation file coming soon.
+
+# Features
 * Code disassembling into Smali bytecode
 * APK signature extraction
 * AndroidManifest parsing: permissions, services, intents, package information etc
@@ -24,7 +23,7 @@ pip install -r requirements.txt
 * Frida gadget injection for instrumentation without root
 * Static detection of privacy leaks
 
-## Smali/Baksmali License
+# Smali/Baksmali License
 
 The majority of smali/baksmali is written and copyrighted by me (Ben Gruver)
 and released under the following license:
