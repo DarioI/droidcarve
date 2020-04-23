@@ -9,15 +9,11 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-import lief
-import zipfile
-import shutil
-import subprocess
-import tempfile
 import os
-import pathlib
-import requests
 import re
+
+import lief
+import requests
 
 gadget_architecture = {
     "arm64": "android-arm64.so",

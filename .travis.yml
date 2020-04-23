@@ -9,7 +9,7 @@ before_install:
   - pip install -U pip
 # command to install dependencies
 install:
-  - pip install -r requirements.txt
+  - pip install -r server/requirements.txt
 # command to run tests
 script:
-  - python -m unittest discover tests
+  - python -m unittest discover server/tests

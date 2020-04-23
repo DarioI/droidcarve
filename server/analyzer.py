@@ -15,8 +15,6 @@ import os
 import utils
 from subprocess import call
 
-from apkid.apkid import Scanner, Options
-
 from parsers import FileParser, CodeParser, APKParser, ManifestParser
 
 BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
@@ -103,7 +101,7 @@ class AndroidAnalyzer:
     def get_manifest_parsed(self):
         return self.manifest_parser.get_manifest()
 
-    def get_stats(self):
+    def get_stats(self) -> dict:
         if not self.analysis:
             print("Please analyze the APK before running this command.")
             return
@@ -165,12 +163,3 @@ class AndroidAnalyzer:
     def disassemble_apk(self):
         logging.info("[*] Disassembling APK ...")
         call(["java", "-jar", BAKSMALI_PATH, "d", self.apk_file, "-o", self.cache_path])
-
-    def analyze_obfuscation(self):
-        options = Options(
-            json=True
-        )
-
-        rules = options.rules_manager.load()
-        scanner = Scanner(rules, options)
-        scanner.scan(self.apk_file)

@@ -8,7 +8,7 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, stream_with_context, Response
 from flask_cors import CORS
 
 import utils, os, tempfile, logging
@@ -17,6 +17,7 @@ from werkzeug.utils import secure_filename
 
 UPLOAD_DIR = tempfile.mkdtemp()
 app = Flask("DroidCarve API")
+app.config['SECRET_KEY'] = 'secret!'
 CORS(app)
 
 analysisController = AnalysisController()
@@ -131,14 +132,38 @@ def manifest(action):
     return jsonify({}), 404
 
 
-@app.route('/login')
-def login():
-    return 'login'
+@app.route('/logcat/<action>', methods=['GET'])
+def logcat(action):
+    if action == "start":
+        try:
+            deviceController.start_logcat()
+            return "", 200
+        except AttributeError as e:
+            print(e)
+            return '', 400
+
+    if action == "stop":
+        try:
+            deviceController.stop_logcat()
+        except AttributeError:
+            return '', 400
+
+    if action == "stream":
+        @stream_with_context
+        def generate():
+            line = deviceController.next_logcat_line()
+            while line:
+                yield line.decode('utf-8')
+
+        return Response(generate())
+
+    return jsonify({}), 404
 
 
 def main():
     set_logging()
-    app.run(host="127.0.0.1", port=1337)
+    logging.info("[*] DroidCarve Server - BOOT")
+    app.run('127.0.0.1', 1337)
 
 
 def set_logging():
@@ -154,5 +179,5 @@ if __name__ == "__main__":
 
     if not utils.adb_available():
         logging.error("[!!!] ADB not found. Features that need a connected Android device won't work. Please "
-                        "install ADB before using DroidCarve.")
+                      "install ADB before using DroidCarve.")
     main()

@@ -4,8 +4,7 @@ lief
 paramiko
 adbutils
 whichcraft
-apkid
 yara-python==3.11.0
-flask
 flask-cors
 werkzeug
+flask

@@ -14,8 +14,7 @@ import io, os, re, utils, logging
 from pyaxmlparser import APK
 from pyaxmlparser.axmlprinter import AXMLPrinter
 import xml.etree.ElementTree as ET
-
-import constants
+from constants import smali
 
 url_regex = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://
@@ -27,7 +26,7 @@ url_regex = re.compile(
 
 
 def is_crypto(class_being_called):
-    if class_being_called in constants.CRYPTO_CLASSES:
+    if class_being_called in smali.CRYPTO_CLASSES:
         return class_being_called
     return None
 
@@ -161,22 +160,22 @@ def is_method_call(line):
 def _is_smali_code(code_line):
     code_line = code_line.lstrip().replace("\n", "")
 
-    if code_line.startswith(constants.CLASS_ANNOTATION):
+    if code_line.startswith(smali.CLASS_ANNOTATION):
         return False
 
-    if code_line.startswith(constants.ANNOTATION):
+    if code_line.startswith(smali.ANNOTATION):
         return False
 
-    if code_line.startswith(constants.INTERFACE_ANNOTATION):
+    if code_line.startswith(smali.INTERFACE_ANNOTATION):
         return False
 
-    if code_line.startswith(constants.SUPER_ANNOTATION):
+    if code_line.startswith(smali.SUPER_ANNOTATION):
         return False
 
-    if code_line.startswith(constants.SOURCE_ANNOTATION):
+    if code_line.startswith(smali.SOURCE_ANNOTATION):
         return False
 
-    if code_line.startswith(constants.END):
+    if code_line.startswith(smali.END):
         return False
 
     return True
@@ -233,13 +232,13 @@ def extract_class_method(data):
 
 
 def is_dynamic(class_being_called):
-    if class_being_called in constants.DYNAMIC_LOADING_CLASSES:
+    if class_being_called in smali.DYNAMIC_LOADING_CLASSES:
         return class_being_called
     return None
 
 
 def is_safetynet(class_being_called):
-    if class_being_called in constants.SAFETYNET_CLASSES:
+    if class_being_called in smali.SAFETYNET_CLASSES:
         return class_being_called
     return None
 

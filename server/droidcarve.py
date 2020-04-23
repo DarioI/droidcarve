@@ -3,7 +3,6 @@
 # Copyright (C) 2020, Dario Incalza <dario.incalza at gmail.com>
 # All rights reserved.
 #
-from adbutils import AdbError
 
 __author__ = "Dario Incalza <dario.incalza@gmail.com"
 __copyright__ = "Copyright 2020, Dario Incalza"
@@ -13,6 +12,7 @@ __email__ = "dario.incalza@gmail.com"
 import os
 from analyzer import AndroidAnalyzer
 import adb_interface
+from adb_interface import ConnectedDevice
 
 
 class AnalysisController:
@@ -74,7 +74,7 @@ class DeviceController:
     def __init__(self):
         self.connected_device = None
 
-    def get_device(self):
+    def get_device(self) -> dict:
         if not self.connected_device:
             return {
                 'device': None
@@ -84,7 +84,7 @@ class DeviceController:
             'device': self.connected_device.get_info_dict()
         }
 
-    def get_device_list(self):
+    def get_device_list(self) -> dict:
 
         device_list = [{'serial': d.serial, 'name': d.shell(["getprop", "ro.product.model"])} for d in
                        adb_interface.get_devices()]
@@ -98,11 +98,31 @@ class DeviceController:
                 'devices': device_list
             }
 
-    def connect_device(self, serial):
+    def connect_device(self, serial: str):
 
         if not serial:
             return None
 
         else:
-            self.connected_device = adb_interface.ConnectedDevice(serial=serial)
+            self.connected_device = ConnectedDevice(serial=serial)
             return self.connected_device.get_info_dict()
+
+    def start_logcat(self):
+
+        if not self.connected_device:
+            raise AttributeError("No connected device")
+
+        self.connected_device.start_logcat_interface()
+
+    def next_logcat_line(self):
+        if not self.connected_device:
+            raise AttributeError("No connected device")
+
+        return self.connected_device.get_next_line()
+
+    def stop_logcat(self):
+        if not self.connected_device:
+            raise AttributeError("No connected device")
+
+        self.connected_device.tear_down_logcat_interface()
+
