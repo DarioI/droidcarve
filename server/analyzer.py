@@ -10,11 +10,10 @@ __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
 import hashlib
-import logging
 import os
-import utils
-from subprocess import call
 
+from subprocess import call
+import utils
 from parsers import FileParser, CodeParser, APKParser, ManifestParser
 
 BAKSMALI_PATH = os.getcwd() + "/bin/baksmali.jar"
@@ -35,7 +34,7 @@ class AndroidAnalyzer:
 
     def generate_cache(self, apk_file):
         hash = hashlib.sha1(open(apk_file, 'rb').read()).hexdigest()[0:10]
-        logging.info("[*] Hash of APK file = " + hash)
+        print("[*] Hash of APK file = " + hash)
         CACHE_PATH = os.getcwd() + "/" + hash + CACHE_PATH_SUFFIX
         UNZIPPED_PATH = os.getcwd() + "/" + hash + UNZIPPED_PATH_SUFFIX
 
@@ -58,10 +57,10 @@ class AndroidAnalyzer:
 
     def unzip_apk(self, destination=None):
         if destination is None or destination == "":
-            logging.info("[*] Unzipping APK ...")
+            print("[*] Unzipping APK ...")
             call(["unzip", self.apk_file, "-d", self.unzip_path])
         else:
-            logging.info("[*] Unzipping APK to %s ... " % destination)
+            print("[*] Unzipping APK to %s ... " % destination)
             call(["unzip", self.apk_file, "-d", destination])
 
     def get_source_tree(self):
@@ -81,19 +80,20 @@ class AndroidAnalyzer:
             self.unzip_apk()
             self.disassemble_apk()
         else:
-            logging.info("[*] Start analysis from cache ...")
+            print("[*] Start analysis from cache ...")
 
-        logging.info("[*] Analyzing disassembled code ...")
+        print("[*] Analyzing disassembled code ...")
         self.code_parser.start()
-        logging.info("[*] Analyzing unzipped files ...")
+        print("[*] Analyzing unzipped files ...")
         self.file_parser.start()
 
-        logging.info("[*] Analyzing APK ...")
+        print("[*] Analyzing APK ...")
         self.apk_parser = APKParser(self.file_parser.get_xml("AndroidManifest.xml"), self.apk_file)
-        logging.info("[*] Analyzing AndroidManifest_unobfuscated.xml ...")
+        print("[*] Analyzing AndroidManifest.xml ...")
         self.manifest_parser = ManifestParser(self.apk_parser.get_xml())
-        logging.info("[*] Analyzing ... Done")
+        print("[*] Analyzing AndroidManifest.xml ... Done")
         self.analysis = True
+        print("[*] Pre-analysis ... Done")
 
     def get_manifest_source(self):
         return self.manifest_parser.get_manifest_xml()
@@ -103,8 +103,7 @@ class AndroidAnalyzer:
 
     def get_stats(self) -> dict:
         if not self.analysis:
-            print("Please analyze the APK before running this command.")
-            return
+            raise AttributeError
 
         return {
             'classes': self.code_parser.get_classes(),
@@ -118,8 +117,7 @@ class AndroidAnalyzer:
     def find_safetyNet(self):
 
         if not self.analysis:
-            print("Please analyze the APK before running this command.")
-            return
+            raise AttributeError
 
         return self.code_parser.get_safetynet()
 
@@ -150,7 +148,6 @@ class AndroidAnalyzer:
 
         return self.code_parser.get_crypto()
 
-
     def find_dynamic_loading(self):
 
         if not self.analysis:
@@ -159,7 +156,6 @@ class AndroidAnalyzer:
 
         return self.code_parser.get_dynamic()
 
-
     def disassemble_apk(self):
-        logging.info("[*] Disassembling APK ...")
+        print("[*] Disassembling APK ...")
         call(["java", "-jar", BAKSMALI_PATH, "d", self.apk_file, "-o", self.cache_path])

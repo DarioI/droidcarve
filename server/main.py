@@ -8,25 +8,47 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-from flask import Flask, jsonify, request, send_file, stream_with_context, Response
+from flask import Flask, jsonify, request, send_file, stream_with_context, Response, send_from_directory
 from flask_cors import CORS
 
-import utils, os, tempfile, logging
+import os, tempfile, utils
 from droidcarve import AnalysisController, DeviceController
 from werkzeug.utils import secure_filename
 
 UPLOAD_DIR = tempfile.mkdtemp()
-app = Flask("DroidCarve API")
+app = Flask(__name__, static_folder='../client/build')
 app.config['SECRET_KEY'] = 'secret!'
 CORS(app)
 
 analysisController = AnalysisController()
 deviceController = DeviceController()
 
+print("[*] DroidCarve Server - BOOT")
 
-@app.route('/', methods=['GET'])
-def index():
-    return jsonify({'status': 'running', 'version': '0.0.1'})
+def pre_check():
+    print("[*] Performing pre-check ... ")
+    if not utils.has_baksmali():
+        print("[!!!] - no baksmali binary found - exiting.")
+        exit(2)
+    if not utils.adb_available():
+        print("[!!!] ADB not found. Features that need a connected Android device won't work. Please "
+              "install ADB before using DroidCarve.")
+        exit(2)
+    print("[*] Performing pre-check ... Done")
+    print("[*} Start at http://localhost:1337")
+
+
+pre_check()
+
+
+# Serve React App
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 
 @app.route('/status', methods=['GET'])
@@ -93,7 +115,7 @@ def application(action=None):
         print(e)
         return jsonify({'error': 'APPLICATION_NOT_SET'}), 400
     except TypeError as e:
-        logging.error(e)
+        print(e)
         return jsonify({'error': 'NON_VALID_APK'}), 400
 
 
@@ -103,7 +125,7 @@ def source(action=None):
         return "", 200
 
     if action == "tree":
-        return analysisController.get_source_tree(), 200
+        return jsonify(analysisController.get_source_tree()), 200
 
 
 @app.route('/file/<action>/<key>', methods=['GET', 'POST', 'OPTIONS'])
@@ -162,7 +184,7 @@ def logcat(action):
 
 def main():
     set_logging()
-    logging.info("[*] DroidCarve Server - BOOT")
+    print("[*] DroidCarve Server - BOOT")
     app.run('127.0.0.1', 1337)
 
 
@@ -172,12 +194,5 @@ def set_logging():
 
 
 if __name__ == "__main__":
-
-    if not utils.has_baksmali():
-        logging.error("[!!!] - no baksmali binary found - exiting.")
-        exit(2)
-
-    if not utils.adb_available():
-        logging.error("[!!!] ADB not found. Features that need a connected Android device won't work. Please "
-                      "install ADB before using DroidCarve.")
+    pre_check()
     main()

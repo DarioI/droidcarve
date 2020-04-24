@@ -9,12 +9,12 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-import io, os, re, logging
-from server import utils
+import io, os, re
+import utils
 from pyaxmlparser import APK
 from pyaxmlparser.axmlprinter import AXMLPrinter
 import xml.etree.ElementTree as ET
-from server.constants import smali
+from constants import smali
 
 url_regex = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://
@@ -309,8 +309,8 @@ class CodeParser:
                     if not continue_loop:
                         continue
 
-        logging.info("Found %s classes" % str(len(self.classes)))
-        logging.info("Found %s strings" % str(len(self.strings)))
+        print("[*] Found %s classes" % str(len(self.classes)))
+        print("[*] Found %s strings" % str(len(self.strings)))
 
     def get_file_for_hash(self, key):
         try:
@@ -507,7 +507,7 @@ class ManifestParser:
             self._parse_receiver(element)
             self._parse_meta_data(element)
         except TypeError as e:
-            logging.error(e)
+            print(e)
 
         for child in element:
             self._parse_element(child)

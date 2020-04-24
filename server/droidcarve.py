@@ -30,7 +30,7 @@ class AnalysisController:
         return self.apk_analyzer.get_app_id()
 
     def set_application(self, filepath):
-        print("Checking {}".format(filepath))
+        print("[*] Checking {}".format(filepath))
         if os.path.exists(filepath):
             self.apk_analyzer = AndroidAnalyzer(apk_file=filepath)
             self.apk_analyzer.pre_analyze()

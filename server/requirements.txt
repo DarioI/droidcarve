@@ -6,3 +6,4 @@ whichcraft
 flask-cors
 werkzeug
 flask
+gunicorn
