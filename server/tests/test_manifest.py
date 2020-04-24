@@ -1,11 +1,10 @@
 import unittest, os
-from server.parsers import ManifestParser
+from parsers import ManifestParser
 
 
 class TestManifestParser(unittest.TestCase):
 
     def test_unobfuscated_manifest(self):
-        print(os.getcwd())
         manifest_file = open((os.path.dirname(__file__))+'/data/AndroidManifest_unobfuscated.xml', 'rb')
         xml_bytes = manifest_file.read()
         manifest_file.close()
