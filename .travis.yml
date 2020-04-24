@@ -12,4 +12,5 @@ install:
   - pip install -r server/requirements.txt
 # command to run tests
 script:
-  - python -m unittest discover server/tests
+
+  - cd server/ && python -m unittest discover server/tests
