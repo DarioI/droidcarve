@@ -34,7 +34,7 @@ git clone https://github.com/DarioI/droidcarve
 ```
 * Build the DroidCarve web interface
 ```bash
-cd droicarve/client
+cd droidcarve/client
 yarn install
 yarn build
 ```
@@ -45,7 +45,7 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install --no-cache-dir -r server/requirements.txt
 ```
-* Start DroidCarve
+* Start the DroidCarve Server
 ```bash
 export PYTHONUNBUFFERED=TRUE
 gunicorn -b 0.0.0.0:1337 --log-level=info wsgi:app --workers=1 --threads=10 --timeout=1800
