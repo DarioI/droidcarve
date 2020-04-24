@@ -10,7 +10,48 @@ The frontend is a React application, which you can find in the `client/` subfold
 The backend is a Python `flask` application, which you can find in the `server/` subfolder.
 
 # Installation
-Installation file coming soon.
+## Automatic
+Installation files only work on OS X for now, but DroidCarve should still run fine on Linux, for installation see `Manual` section.
+
+```bash
+git clone https://github.com/DarioI/droidcarve
+cd droidcarve
+chmod +x install.sh
+chmod +x run.sh
+./install.sh
+./run.sh
+```
+
+## Manual
+
+Make sure you have Python 3.4+ installed.
+
+* Install the JS dependency management tool [Yarn](https://classic.yarnpkg.com/en/docs/install).
+* Install the [Android Debug Bridge (ADB)](https://developer.android.com/studio/command-line/adb) tool.
+* Clone the DroidCarve repository
+```bash
+git clone https://github.com/DarioI/droidcarve
+```
+* Build the DroidCarve web interface
+```bash
+cd droicarve/client
+yarn install
+yarn build
+```
+* Install the Python dependencies
+```bash
+cd ../server
+source venv/bin/activate
+pip install --upgrade pip
+pip install --no-cache-dir -r server/requirements.txt
+```
+* Start DroidCarve
+```bash
+export PYTHONUNBUFFERED=TRUE
+gunicorn -b 0.0.0.0:1337 --log-level=info wsgi:app --workers=1 --threads=10 --timeout=1800
+```
+
+DroidCarve should now be up and running at [http://localhost:1337](http://localhost:1337).
 
 # Features
 * Code disassembling into Smali bytecode

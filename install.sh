@@ -8,7 +8,7 @@ function program_installed {
 
 
 echo "[*] Installing DroidCarve"
-if [ $(program_installed node) == 1 ]; then
+if [ $(program_installed yarn) == 1 ]; then
     echo "[*] Yarn detected"
 else
     echo "[*] Installing yarn ... "
