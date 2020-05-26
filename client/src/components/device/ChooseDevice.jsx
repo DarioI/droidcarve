@@ -11,12 +11,7 @@ class ChooseDevice extends React.Component {
         super(props)
         this.state = {
             loading: true,
-            devices : [
-                {
-                    'title': 'test',
-                    'description': "description"
-                }
-            ]
+            devices : []
         }
 
         this.refresh = this.refresh.bind(this);
