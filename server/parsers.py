@@ -9,7 +9,7 @@ __copyright__ = "Copyright 2020, Dario Incalza"
 __maintainer__ = "Dario Incalza"
 __email__ = "dario.incalza@gmail.com"
 
-import io, os, re
+import io, os, re, sys, traceback
 import utils
 from pyaxmlparser import APK
 from pyaxmlparser.axmlprinter import AXMLPrinter
@@ -269,49 +269,65 @@ class CodeParser:
             if el.startswith("L") and el.endswith(";"):
                 return el
 
+    def is_invalid_line(self, line):
+        return line.lstrip().startswith("#")
+
     def start(self):
-        for subdir, dirs, files in os.walk(self.code_path):
-            for file in files:
-                full_path = os.path.join(subdir, file)
-                with io.open(full_path, 'r', encoding="utf-8") as f:
-                    file_key = utils.get_path_hash(full_path)
-                    self.file_hash_table[file_key] = full_path
-                    continue_loop = True
-                    line_number = 1
-                    temp_clazz = {}
-                    for line in f:
-                        if is_class(line):
-                            temp_clazz = extract_class(line, full_path, file_key)
-                            self.classes.append(temp_clazz)
+        try:
+            for subdir, dirs, files in os.walk(self.code_path):
+                for file in files:
+                    full_path = os.path.join(subdir, file)
+                    with io.open(full_path, 'r', encoding="utf-8") as f:
+                        file_key = utils.get_path_hash(full_path)
+                        self.file_hash_table[file_key] = full_path
+                        continue_loop = True
+                        line_number = 1
+                        temp_clazz = {}
+                        for line in f:
 
-                        if is_const_string(line):
-                            string = extract_const_string(line)['value']
-                            self.strings.append(string)
-                            if is_url(string):
-                                self.urls.append({
-                                        "url": string,
-                                        "class": {"name": temp_clazz['name'], "key": temp_clazz['key']},
-                                        "line_number": line_number
-                                    })
-                            if temp_clazz:
-                                temp_clazz["const-strings"].append(string)
+                            if is_class(line):
+                                temp_clazz = extract_class(line, full_path, file_key)
+                                self.classes.append(temp_clazz)
 
-                        elif '.method' in line:  # class methods
-                            if is_class_method(line):
-                                class_method = extract_class_method(line)
+                            if is_const_string(line):
+                                if self.is_invalid_line(line):
+                                    print("Skipping invalid line - {} - in class {}".format(temp_clazz['name'], line))
+                                else:
+                                    string_struct = extract_const_string(line)
+                                    if string_struct:
+                                        string = extract_const_string(line)['value']
+                                        self.strings.append(string)
+                                        if is_url(string):
+                                            self.urls.append({
+                                                    "url": string,
+                                                    "class": {"name": temp_clazz['name'], "key": temp_clazz['key']},
+                                                    "line_number": line_number
+                                                })
+                                        if temp_clazz:
+                                            temp_clazz["const-strings"].append(string)
+                                    else:
+                                        print("[!!!] Nonetype string line for class {} and line {}".format(temp_clazz['name'], line))
+
+                            elif '.method' in line:  # class methods
+                                if is_class_method(line):
+                                    class_method = extract_class_method(line)
 
 
-                        elif 'invoke' in line:
-                            if is_method_call(line):
-                                method_call = extract_method_call(line, line_number)
-                                self.process_crypto(method_call, temp_clazz, line_number)
-                                self.proces_dynamic(method_call, temp_clazz)
-                                self.proces_safetynet(method_call, temp_clazz)
+                            elif 'invoke' in line:
+                                if is_method_call(line):
+                                    method_call = extract_method_call(line, line_number)
+                                    self.process_crypto(method_call, temp_clazz, line_number)
+                                    self.proces_dynamic(method_call, temp_clazz)
+                                    self.proces_safetynet(method_call, temp_clazz)
 
-                        line_number += 1
+                            line_number += 1
 
-                    if not continue_loop:
-                        continue
+                        if not continue_loop:
+                            continue
+        except:
+            print("[!!!] Unexpected error during disassembling")
+            print(sys.exc_info()[0])
+            print(traceback.format_exc())
 
         print("[*] Found %s classes" % str(len(self.classes)))
         print("[*] Found %s strings" % str(len(self.strings)))
