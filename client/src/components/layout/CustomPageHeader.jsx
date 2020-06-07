@@ -7,14 +7,15 @@ import DeviceInfo from '../device/DeviceInfo';
 
 class CustomPageHeader extends React.Component {
 
+
     getExtra(device)
     {
         if (!device)
         {
             return(
                 [
-                    <Badge status="error" text={<b>No device connected</b>} />,
-                    <Popover placement="bottomRight" title={"Connect a device"} content={<div style={{width: 500}}><ChooseDevice /></div>} trigger="click">
+                    <Badge key="1" status="error" text={<b>No device connected</b>} />,
+                    <Popover key="2" placement="bottomRight" title={"Connect a device"} content={<div style={{width: 500}}><ChooseDevice /></div>} trigger="click">
                         <Button key="1" type="primary" size="small">connect</Button>
                     </Popover>
                 ]
@@ -23,8 +24,8 @@ class CustomPageHeader extends React.Component {
 
         return(
             [
-                <Badge status="processing" text={<b>{device.serial} connected</b>} />,
-                <Popover placement="bottomRight" title={"Connected Device Info"} content={<div style={{width: 700}}><DeviceInfo /></div>} trigger="click">
+                <Badge key="1" status="processing" text={<b>{device.serial} connected</b>} />,
+                <Popover key="2" placement="bottomRight" title={"Connected Device Info"} content={<div style={{width: 700}}><DeviceInfo /></div>} trigger="click">
                     <Button key="1" type="primary" size="small">info</Button>
                 </Popover>
             ]

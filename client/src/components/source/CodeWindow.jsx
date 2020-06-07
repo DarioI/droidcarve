@@ -19,13 +19,19 @@ class CodeWindow extends React.Component {
         }
     }
 
-    componentWillReceiveProps(props) {
+    componentDidMount() {
 
-        if (!props.fileKey) return;
-        fileService.getFile(props.fileKey)
+        if (this.props.lineNumbers)
+        {
+            this.setState({lineNumber: this.props.lineNumber})
+        }
+        if (!this.props.fileKey) return;
+
+        fileService.getFile(this.props.fileKey)
             .then(result => {
                 this.setState({file: result.data})
             })
+
     }
 
     render()

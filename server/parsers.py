@@ -120,7 +120,7 @@ def extract_class(data, file_path, file_key):
     class_info = data.split(" ")
     c = {
         # Last element is the class name
-        'name': class_info[-1],
+        'name': class_info[-1].rstrip(),
 
         # Package name
         'package': ".".join(class_info[-1].split('/')[:-1]),
@@ -288,7 +288,11 @@ class CodeParser:
                             string = extract_const_string(line)['value']
                             self.strings.append(string)
                             if is_url(string):
-                                self.urls.append(string)
+                                self.urls.append({
+                                        "url": string,
+                                        "class": {"name": temp_clazz['name'], "key": temp_clazz['key']},
+                                        "line_number": line_number
+                                    })
                             if temp_clazz:
                                 temp_clazz["const-strings"].append(string)
 

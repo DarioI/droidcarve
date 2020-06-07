@@ -1,6 +1,6 @@
 import React from 'react';
 
-import {Row, Col, Tabs, message, Card, List, Badge} from 'antd';
+import {Row, Col, Tabs, message, Card, Badge} from 'antd';
 import {ManifestCodeWindow, IntentFilterOverviewTable, SearchableOverviewTable} from '../../components/manifest/';
 import { manifestService } from '../../services';
 

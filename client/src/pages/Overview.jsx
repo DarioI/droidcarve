@@ -1,7 +1,7 @@
 import React from 'react';
-import { Row, Col, Card, Badge, message} from 'antd';
+import { Row, Col, message} from 'antd';
 import { appService } from '../services';
-import CryptoInfo from '../components/CryptoInfo';
+import StatisticCard from '../components/dashboard/StatisticCard';
 
 class Overview extends React.Component {
 
@@ -23,6 +23,7 @@ class Overview extends React.Component {
         appService.getAnalysisOverview()
             .then(result => result.data)
             .then(data => {
+                console.log(data)
                 this.setState({
                         loading: false,
                         crypto: data.crypto,
@@ -41,42 +42,21 @@ class Overview extends React.Component {
     render()
     {
 
-        const {loading, crypto, urls, safetynet, dynamic} = this.state;
+        const {crypto, urls, safetynet, dynamic} = this.state;
 
         return(
             <Row gutter={[16, 24]} type="browser">
                 <Col className="gutter-row" span={12}>
-                        <CryptoInfo crypto={crypto} loading={loading}/>
+                    <StatisticCard title="Cryptography" value={crypto ? crypto.length : 0} suffix={"crypto calls found"} deeplink={"/analysis/crypto"} />
                 </Col>
                 <Col className="gutter-row" span={12}>
-                        <Card title="Dynamic Code Loading" loading={loading} extra={<Badge overflowCount={1000000} count={dynamic ? Object.keys(dynamic).length: 0}/>}>
-                            {dynamic && dynamic.length > 0 &&
-                                <p>{dynamic.length} dynamic code loading calls found.</p>
-                            }
-                            {(!dynamic || dynamic.length === 0) &&
-                                <p>No dynamic code loading calls found.</p>
-                            }
-                        </Card>
+                    <StatisticCard title="Dynamic Code Loading" value={dynamic ? dynamic.length : 0} suffix={"dynamic code loading calls found"} deeplink={"/analysis/dynamicloading"} />
                 </Col>
                 <Col className="gutter-row" span={12}>
-                        <Card title="URL" loading={loading} extra={<Badge overflowCount={1000000} count={urls ? urls.length: 0}/>}>
-                            {urls && urls.length > 0 &&
-                                <p>{urls.length} URLs found.</p>
-                            }
-                            {(!urls || urls.length === 0) &&
-                                <p>No URLs found.</p>
-                            }
-                        </Card>
+                    <StatisticCard title="URLs" value={urls ? urls.length : 0} suffix={"URLs found"} deeplink={"/analysis/urls"} />
                 </Col>
                 <Col className="gutter-row" span={12}>
-                        <Card title="SafetyNet" loading={loading} extra={<Badge overflowCount={1000000} count={safetynet ? Object.keys(safetynet).length: 0}/>}>
-                            {safetynet && safetynet.length > 0 &&
-                                <p>{safetynet.length} SafetyNet calls found.</p>
-                            }
-                            {(!urls || urls.length === 0) &&
-                                <p>No SafetyNet calls found.</p>
-                            }
-                        </Card>
+                    <StatisticCard title="SafetyNet" value={safetynet ? safetynet.length : 0} suffix={"SafetyNet calls found"} deeplink={"/analysis/safetynet"} />
                 </Col>
             </Row>
         )

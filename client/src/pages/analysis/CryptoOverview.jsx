@@ -72,7 +72,7 @@ class CryptoOverview extends React.Component {
                 key: 'operation',
                 render: (text, record, index) => (
                   <span className="table-operation">
-                        <Link to={{pathname: `${"/source"}`, fileKey: record.key}}><Button type="primary" size="small">Source</Button></Link>
+                        <Link to={{pathname: `${"/source"}`, fileKey: record.key, fileName: record.call}}><Button type="primary" size="small">Source</Button></Link>
                   </span>
                 ),
               },

@@ -73,3 +73,5 @@
 .container {
   padding: 24px;
 }
+
+.CodeMirror { height:600px !important}

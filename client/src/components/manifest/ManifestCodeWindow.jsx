@@ -40,7 +40,7 @@ export class ManifestCodeWindow extends React.Component {
 
     render()
     {
-        const {error, loading, manifest} = this.state;
+        const {loading, error, manifest} = this.state;
 
         if (error || !manifest)
         {
@@ -48,7 +48,7 @@ export class ManifestCodeWindow extends React.Component {
         }
 
         return(
-            <Card>
+            <Card loading={loading}>
                 <CodeMirror
                     style={{minHeight: 600, overflow: 'scroll'}}
                     value={this.state.manifest}
