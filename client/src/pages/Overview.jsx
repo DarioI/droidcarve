@@ -47,16 +47,16 @@ class Overview extends React.Component {
         return(
             <Row gutter={[16, 24]} type="browser">
                 <Col className="gutter-row" span={12}>
-                    <StatisticCard title="Cryptography" value={crypto ? crypto.length : 0} suffix={"crypto calls found"} deeplink={"/analysis/crypto"} />
+                    <StatisticCard title="Cryptography" value={crypto ? Object.keys(crypto).length : 0} suffix={"crypto calls found"} deeplink={"/analysis/crypto"} />
                 </Col>
                 <Col className="gutter-row" span={12}>
-                    <StatisticCard title="Dynamic Code Loading" value={dynamic ? dynamic.length : 0} suffix={"dynamic code loading calls found"} deeplink={"/analysis/dynamicloading"} />
+                    <StatisticCard title="Dynamic Code Loading" value={dynamic ? Object.keys(dynamic).length : 0} suffix={"dynamic code loading calls found"} deeplink={"/analysis/dynamicloading"} />
                 </Col>
                 <Col className="gutter-row" span={12}>
                     <StatisticCard title="URLs" value={urls ? urls.length : 0} suffix={"URLs found"} deeplink={"/analysis/urls"} />
                 </Col>
                 <Col className="gutter-row" span={12}>
-                    <StatisticCard title="SafetyNet" value={safetynet ? safetynet.length : 0} suffix={"SafetyNet calls found"} deeplink={"/analysis/safetynet"} />
+                    <StatisticCard title="SafetyNet" value={safetynet ? Object.keys(safetynet).length : 0} suffix={"SafetyNet calls found"} deeplink={"/analysis/safetynet"} />
                 </Col>
             </Row>
         )

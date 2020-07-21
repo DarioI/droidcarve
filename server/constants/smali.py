@@ -28,6 +28,8 @@ CRYPTO_CLASSES = [
     'Ljavax/crypto/spec/PBEKeySpec;',
     'Lorg/spongycastle/jce/provider/BouncyCastleProvider;',
     'Lcom/android/security/KeyChain;',
+    'Landroidx/security/crypto/EncryptedFile;',
+    'Landroidx/security/crypto/MasterKey',
 ]
 
 DYNAMIC_LOADING_CLASSES = [

@@ -20,7 +20,10 @@ export class DeviceProvider extends React.Component {
     {
       deviceService.connectDevice(serial)
         .then( result => result.data )
-        .then( data => {this.refresh()})
+        .then( data => {
+          this.refresh()
+          message.success("Successfully connected to "+serial)
+        })
         .catch( error => {
           message.error("Could not connect to "+serial)
         })

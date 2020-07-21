@@ -10,7 +10,7 @@ class StatisticCard extends React.Component {
             <Link to={this.props.deeplink}>
                 <Card>
                     <Statistic
-                        title={this.props.title}
+                        title={<b>{this.props.title}</b>}
                         value={this.props.value}
                         valueStyle={{ color: this.props.value > 0 ? '#cf1322' : '#3f8600' }}
                         suffix={this.props.suffix}

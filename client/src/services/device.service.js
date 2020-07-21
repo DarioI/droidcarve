@@ -5,7 +5,9 @@ export const deviceService = {
     getCurrentDevice,
     getDevices,
     connectDevice,
-    startLogcat
+    startLogcat,
+    getPackages,
+    dumpAnalyze,
 };
 
 
@@ -27,4 +29,14 @@ function connectDevice(serial)
 function startLogcat()
 {
     return axios.get(apiConstants.START_LOGCAT);
+}
+
+function getPackages()
+{
+    return axios.get(apiConstants.PACKAGES_LIST)
+}
+
+function dumpAnalyze(pckgName)
+{
+    return axios.post(apiConstants.DUMP_APPLICATION, {'package_name': pckgName})
 }

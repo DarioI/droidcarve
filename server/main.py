@@ -79,11 +79,14 @@ def device(action=None):
                 return jsonify({'error': 'DEVICE_CONNECTION_ERROR'}), 400
             else:
                 return jsonify(device_info), 200
+        if action == "packages":
+            packages = deviceController.get_package_list()
+            return jsonify(packages), 200
         else:
             return "", 404
 
     except AttributeError:
-        return jsonify({'error': 'GENERAL_ERROR'}), 400
+        return jsonify({'error': 'DEVICE_NOT_CONNECTED'}), 400
 
 
 @app.route('/app/', methods=['GET'])  # get info
@@ -104,6 +107,16 @@ def application(action=None):
                 file.save(file_path)
                 analysisController.set_application(file_path)
                 return "", 200
+
+        elif action == "dump":
+            if not request.json['package_name']:
+                return jsonify({'error': 'PACKAGE_NAME_MISSING'}), 400
+            pckgname = request.json['package_name']
+            filename = secure_filename(pckgname)
+            file_path = os.path.join(UPLOAD_DIR, filename)
+            deviceController.download_package(pckgname, file_path)
+            analysisController.set_application(file_path)
+            return "", 200
 
         elif action == "stats":
             return jsonify(analysisController.get_statistics()), 200

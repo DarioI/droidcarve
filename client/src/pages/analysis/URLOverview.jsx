@@ -1,7 +1,8 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
-import { Card, Table, message, Input } from 'antd';
+import { Card, Table, message, Input, Drawer, Button } from 'antd';
 import { appService } from '../../services';
+import CodeWindow from '../../components/source/CodeWindow';
 
 const {Search} = Input;
 
@@ -12,11 +13,19 @@ class URLOverview extends React.Component {
         super(props)
         this.state = {
             loading: true,
-            data: [],
-            filter: null
+            tableData: [],
+            origData: [],
+            filter: null,
+            quickCode: {
+                visible: false,
+                fileKey: null,
+                lineNumber: null,
+                fileName: null
+            }
         }
 
         this.getData = this.getData.bind(this)
+        this.closeQuickCodePanel = this.closeQuickCodePanel.bind(this)
     }
 
     getData(urls)
@@ -43,6 +52,30 @@ class URLOverview extends React.Component {
         return data
     }
 
+    closeQuickCodePanel()
+    {
+        this.setState({
+            quickCode: {
+                visible: false,
+                fileKey: null,
+                fileName: null,
+                lineNumber: null,
+            }
+        })
+    }
+
+    showQuickCodePanel(fileKey, fileName, lineNumber)
+    {
+        this.setState({
+            quickCode: {
+                visible: true,
+                fileKey,
+                fileName,
+                lineNumber
+            }
+        })
+    }
+
     componentDidMount()
     {
 
@@ -50,12 +83,25 @@ class URLOverview extends React.Component {
             .then(result => {
                 this.setState({
                     loading: false,
-                    data: result.data.urls
+                    origData: result.data.urls,
+                    tableData: result.data.urls
                 })
             })
             .catch(error => {
                 message.error("Could not load APK.")
             })
+    }
+
+    filterURLs(query)
+    {
+
+        var filtered = this.state.origData.filter(url => {
+            return (url.url.includes(query))
+        })
+
+        this.setState({
+            tableData: filtered
+        })
     }
 
     render()
@@ -73,7 +119,7 @@ class URLOverview extends React.Component {
                 key: 'class',
                 render: (text, record, index) => (
                   <span className="table-operation">
-                        <Link to={{pathname: `${"/source"}`, fileName: record.class, fileKey: record.class_key, lineNumber: record.class_ln}}><span>{record.class}</span></Link>
+                       <Button size="small" onClick={()=>this.showQuickCodePanel(record.class_key, record.class, record.class_ln)}>{record.class}</Button>
                   </span>
                 ),
               },
@@ -85,19 +131,30 @@ class URLOverview extends React.Component {
                 extra={
                         <Search
                         placeholder="Filter on url ..."
-                        onChange={e => console.log(e.target.value)}
-                        onSearch={value => console.log(value)}
+                        onChange={e => this.filterURLs(e.target.value)}
+                        onSearch={value => this.filterURLs(value)}
                         style={{ width: 400 }}
                     />}
             >
                <Table
                 loading={this.state.loading}
                 showHeader={false}
-                dataSource={this.getData(this.state.data)}
+                dataSource={this.getData(this.state.tableData)}
                 columns={columns}
                 pagination={{"hideOnSinglePage": true}}
                 size={"small"}
                 />
+                <Drawer
+                    title={this.state.quickCode.fileName}
+                    placement={"right"}
+                    closable={true}
+                    width={"50%"}
+                    onClose={this.closeQuickCodePanel}
+                    visible={this.state.quickCode.visible}
+                    key={"drawer"}
+                    >
+                    <CodeWindow fileKey={this.state.quickCode.fileKey} />
+                </Drawer>
             </Card>
         )
     }

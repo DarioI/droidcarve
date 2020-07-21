@@ -98,6 +98,12 @@ class DeviceController:
                 'devices': device_list
             }
 
+    def get_package_list(self):
+        if not self.connected_device:
+            raise AttributeError("No connected device")
+
+        return self.connected_device.get_package_list()
+
     def connect_device(self, serial: str):
 
         if not serial:
@@ -125,4 +131,10 @@ class DeviceController:
             raise AttributeError("No connected device")
 
         self.connected_device.tear_down_logcat_interface()
+
+    def download_package(self, packagename, dst):
+        if not self.connected_device:
+            raise AttributeError("No connected device")
+
+        self.connected_device.download_package(packagename, dst)
 

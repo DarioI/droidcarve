@@ -3,15 +3,16 @@ import { List, message, Button } from 'antd';
 import { RedoOutlined, ApiOutlined } from '@ant-design/icons';
 import { deviceService } from '../../services';
 import { DeviceContext } from '../../context/device.context';
+import APKDownloader from './APKDownloader';
 
-class ChooseDevice extends React.Component {
+class ChooseAPK extends React.Component {
 
     constructor(props)
     {
         super(props)
         this.state = {
             loading: true,
-            devices : []
+            devices : [],
         }
 
         this.refresh = this.refresh.bind(this);
@@ -44,32 +45,47 @@ class ChooseDevice extends React.Component {
             })
     }
 
+
+    getView(devContext)
+    {
+        if (!devContext.device)
+        {
+            return(
+                <List
+                    size="large"
+                    itemLayout="horizontal"
+                    bordered
+                    loading={this.state.loading}
+                    dataSource={this.state.devices}
+                    footer={<div style={{textAlign: 'center'}}><Button type="primary" icon={<RedoOutlined />} onClick={this.refresh} size="small">refresh</Button></div>}
+                    renderItem={item => (
+                    <List.Item actions={[<Button key={item.title} type="primary" size="small" icon={<ApiOutlined />} onClick={() => {devContext.connect(item.title)}}>connect</Button>]}>
+                        <List.Item.Meta
+                            title={<span>{item.title}</span>}
+                            description={<span>{item.description}</span>}
+                        />
+                    </List.Item>
+                    )}
+                />
+            )
+        }
+        else{
+            return(
+                <APKDownloader />
+            )
+        }
+    }
     render()
     {
 
         return(
             <DeviceContext.Consumer>
-                {context =>
-                    <List
-                        size="large"
-                        itemLayout="horizontal"
-                        bordered
-                        loading={this.state.loading}
-                        dataSource={this.state.devices}
-                        footer={<div style={{textAlign: 'center'}}><Button type="primary" icon={<RedoOutlined />} onClick={this.refresh} size="small">refresh</Button></div>}
-                        renderItem={item => (
-                        <List.Item actions={[<Button key={item.title} type="primary" size="small" icon={<ApiOutlined />} onClick={() => {context.connect(item.title)}}>connect</Button>]}>
-                            <List.Item.Meta
-                                title={<span>{item.title}</span>}
-                                description={<span>{item.description}</span>}
-                            />
-                        </List.Item>
-                        )}
-                    />
+                {devContext =>
+                    this.getView(devContext)
                 }
             </DeviceContext.Consumer>
         )
     }
 }
 
-export default ChooseDevice;
+export default ChooseAPK;

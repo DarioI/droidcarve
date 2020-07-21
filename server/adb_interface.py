@@ -11,7 +11,7 @@ __email__ = "dario.incalza@gmail.com"
 
 from adbutils import adb
 import threading, subprocess
-import queue
+import queue, os
 
 
 def get_devices():
@@ -31,8 +31,14 @@ class ConnectedDevice:
         self.serial = self.device.serial
         self._logcat_reader = None
 
-    def get_packages(self):
-        return self.device.list_packages()
+    def get_package_list(self, full_info=False):
+        if not full_info:
+            return self.device.list_packages()
+        else:
+            pkgs = []
+            for p in self.device.list_packages():
+                pkgs.append(self.device.package_info(p))
+            return pkgs
 
     def download_package(self):
         pass
@@ -62,12 +68,13 @@ class ConnectedDevice:
         if not self._logcat_reader:
             self._logcat_reader = LogCatInterface(device_serial=self.serial)
             self._logcat_reader.init()
-       #with app.app_context():
-          #  while self._logcat_reader.hasNext():
-          #      line = self._logcat_reader.next()
-             #   logging.debug('[%s] - [WS] %s'.format(websocket.LOGCAT_MSG, line))
-               # emit(websocket.LOGCAT_MSG, {'data', line})
-               # eventlet.sleep(1)
+
+    # with app.app_context():
+    #  while self._logcat_reader.hasNext():
+    #      line = self._logcat_reader.next()
+    #   logging.debug('[%s] - [WS] %s'.format(websocket.LOGCAT_MSG, line))
+    # emit(websocket.LOGCAT_MSG, {'data', line})
+    # eventlet.sleep(1)
 
     def get_next_line(self):
         if self._logcat_reader.hasNext():
@@ -78,6 +85,14 @@ class ConnectedDevice:
     def tear_down_logcat_interface(self):
         self._logcat_reader.stop()
         self._logcat_reader = None
+
+    def download_package(self, packagename, dst):
+        full_path = self.device.shell("pm path {}".format(packagename)).split("package:")[1].rstrip("\n")
+        self.device.shell("cp {} /sdcard/temp.apk".format(full_path))
+        if os.path.exists(dst):
+            os.remove(dst)
+        self.device.sync.pull("/sdcard/temp.apk", dst)
+        return dst
 
 
 class LogCatInterface:
@@ -130,3 +145,7 @@ class AsynchronousAdbReader(threading.Thread):
     def eof(self):
         '''Check whether there is no more content to expect.'''
         return not self.is_alive() and self._queue.empty()
+
+if __name__ == "__main__":
+    device = ConnectedDevice(serial="RF8M4050H3A")
+    device.download_package("cake.app", "temp.apk")
