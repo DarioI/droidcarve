@@ -333,10 +333,7 @@ class CodeParser:
         print("[*] Found %s strings" % str(len(self.strings)))
 
     def get_file_for_hash(self, key):
-        try:
-            return self.file_hash_table[key]
-        except KeyError:
-            return None
+        return self.file_hash_table[key]
 
     def process_crypto(self, method_call, temp_clazz, line_number=-1):
 
@@ -455,11 +452,14 @@ class FileParser:
         self.files_path = files_path
         self.signature_files = []
         self.xml_files = []
+        self.file_hash_table = {}
 
     def start(self):
         for subdir, dirs, files in os.walk(self.files_path):
             for file in files:
                 full_path = os.path.join(subdir, file)
+                file_key = utils.get_path_hash(full_path)
+                self.file_hash_table[file_key] = full_path
                 if file.endswith("RSA"):
                     self.signature_files.append(full_path)
                 if file.endswith("xml"):
@@ -475,6 +475,12 @@ class FileParser:
         for xml_file in self.xml_files:
             if xml_file.endswith(name):
                 return xml_file
+
+    def get_file_for_hash(self, key):
+        try:
+            return self.file_hash_table[key]
+        except KeyError:
+            return None
 
 
 class ManifestParser:

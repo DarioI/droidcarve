@@ -66,8 +66,16 @@ class AndroidAnalyzer:
     def get_source_tree(self):
         return utils.path_to_dict(self.cache_path)
 
+    def get_files_tree(self):
+        return utils.path_to_dict(self.unzip_path)
+
     def get_source_file(self, key):
-        return self.code_parser.get_file_for_hash(key)
+
+        #not ideal for now, but hash collisions on full file path are unlikely.
+        try:
+            return self.code_parser.get_file_for_hash(key)
+        except KeyError:
+            return self.file_parser.get_file_for_hash(key)
 
     def pre_analyze(self):
         """

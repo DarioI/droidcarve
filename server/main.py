@@ -140,6 +140,14 @@ def source(action=None):
     if action == "tree":
         return jsonify(analysisController.get_source_tree()), 200
 
+@app.route('/files/<action>', methods=['GET', 'POST', 'OPTIONS'])
+def files(action=None):
+    if request.method == 'OPTIONS':
+        return "", 200
+
+    if action == "tree":
+        return jsonify(analysisController.get_files_tree()), 200
+
 
 @app.route('/file/<action>/<key>', methods=['GET', 'POST', 'OPTIONS'])
 def file(action=None, key=None):

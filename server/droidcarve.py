@@ -50,6 +50,12 @@ class AnalysisController:
 
         return self.apk_analyzer.get_source_tree()
 
+    def get_files_tree(self):
+        if not self.apk_analyzer:
+            raise AttributeError("No application has been selected.")
+
+        return self.apk_analyzer.get_files_tree()
+
     def get_source_file_path(self, key):
         if not self.apk_analyzer:
             raise AttributeError("No application has been selected.")

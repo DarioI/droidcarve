@@ -16,6 +16,7 @@ export const apiConstants = {
 
     // FILE API
     GET_FILE: BASE_URL+'/file/download',
+    GET_FILE_TREE: BASE_URL+'/files/tree',
 
     // DEVICE API
     CURRENT_DEVICE: BASE_URL+'/device/',

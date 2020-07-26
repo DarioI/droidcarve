@@ -4,9 +4,10 @@ import Overview from "../pages/Overview.jsx";
 import CryptoOverview from "../pages/analysis/CryptoOverview.jsx";
 import URLOverview from "../pages/analysis/URLOverview.jsx";
 import SourceViewer from "../pages/source/SourceViewer.jsx";
+import FileBrowser from "../pages/files/FileBrowser.jsx";
 import ManifestOverview from "../pages/manifest/ManifestOverview.jsx";
 import LogcatViewer from "../pages/device/LogcatViewer.jsx";
-import { AreaChartOutlined, SearchOutlined, CodeOutlined } from '@ant-design/icons';
+import { AreaChartOutlined, SearchOutlined, CodeOutlined, ContainerOutlined } from '@ant-design/icons';
 
 var routes = [
     {
@@ -29,6 +30,13 @@ var routes = [
       icon: <CodeOutlined />,
       name: "Source",
       component: SourceViewer,
+    },
+    {
+      path: "/files",
+      visible: true,
+      icon: <ContainerOutlined />,
+      name: "File Browser",
+      component: FileBrowser,
     },
     {
         path: "/analysis",
